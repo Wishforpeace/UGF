@@ -2,7 +2,7 @@ import os
 import logging
 import pickle
 import numpy as np
-
+import sys
 import torch
 import torch.nn.functional as F
 from torch.utils.data import Dataset, DataLoader
@@ -33,6 +33,10 @@ class MMDataset(Dataset):
         self.audio = data[self.mode]['audio'].astype(np.float32)
         self.rawText = data[self.mode]['raw_text']
         self.ids = data[self.mode]['id']
+        self.args.use_bert = True
+        self.args.need_truncated = True
+        self.args.need_data_aligned = True
+
 
         self.labels = {
             'M': data[self.mode][self.args.train_mode+'_labels'].astype(np.float32)
@@ -48,8 +52,11 @@ class MMDataset(Dataset):
             self.vision_lengths = data[self.mode]['vision_lengths']
         self.audio[self.audio == -np.inf] = 0
 
-        if  self.args.need_normalized:
-            self.__normalize()
+        # if  self.args.need_normalized:
+        #     self.__normalize()
+
+        if self.args.need_truncated:
+            self.__truncated()
     
     def __init_mosei(self):
         return self.__init_mosi()
@@ -64,21 +71,24 @@ class MMDataset(Dataset):
                 return modal_features
             truncated_feature = []
             padding = np.array([0 for i in range(modal_features.shape[2])])
+            
             for instance in modal_features:
                 for index in range(modal_features.shape[1]):
                     if((instance[index] == padding).all()):
                         if(index + length >= modal_features.shape[1]):
-                            truncated_feature.append(instance[index:index+20])
+                            truncated_feature.append(instance[index:index+length])
                             break
                     else:                        
-                        truncated_feature.append(instance[index:index+20])
+                        truncated_feature.append(instance[index:index+length])
                         break
             truncated_feature = np.array(truncated_feature)
+            
             return truncated_feature
-                       
+        
         text_length, audio_length, video_length = self.args.seq_lens
+        audio_length, video_length =[50,50] 
         self.vision = Truncated(self.vision, video_length)
-        self.text = Truncated(self.text, text_length)
+        
         self.audio = Truncated(self.audio, audio_length)
 
     def __normalize(self):

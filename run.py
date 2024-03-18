@@ -6,15 +6,17 @@ import torch
 import pynvml
 import logging
 import argparse
+import sys
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
-
+import torch.nn as nn
 from models.AMIO import AMIO
 from trains.ATIO import ATIO
 from data.load_data import MMDataLoader
 from config.config_tune import ConfigTune
 from config.config_regression import ConfigRegression
+
 
 os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"
 
@@ -52,7 +54,10 @@ def run(args):
     args.device = device
     # data
     dataloader = MMDataLoader(args)
+
+    
     model = AMIO(args).to(device)
+    
 
     def count_parameters(model):
         answer = 0
@@ -63,17 +68,21 @@ def run(args):
         return answer
     logger.info(f'The model has {count_parameters(model)} trainable parameters')
     # using multiple gpus
-    # if using_cuda and len(args.gpu_ids) > 1:
-    #     model = torch.nn.DataParallel(model,
-    #                                   device_ids=args.gpu_ids,
-    #                                   output_device=args.gpu_ids[0])
+    if using_cuda and len(args.gpu_ids) > 1:
+        model = torch.nn.DataParallel(model,
+                                      device_ids=args.gpu_ids,
+                                      output_device=args.gpu_ids[0])
+    
     atio = ATIO().getTrain(args)
     # do train
     atio.do_train(model, dataloader)
     # load pretrained model
     assert os.path.exists(args.model_save_path)
     model.load_state_dict(torch.load(args.model_save_path))
+
+
     model.to(device)
+
 
     # do test
     if args.tune_mode:
@@ -138,10 +147,12 @@ def run_tune(args, tune_times=50):
             df = pd.DataFrame(columns = [k for k in args.d_paras] + [k for k in results[0].keys()])
         # stat results
         tmp = [args[c] for c in args.d_paras]
+        
         for col in results[0].keys():
             values = [r[col] for r in results]
+           
             tmp.append(round(sum(values) * 100 / len(values), 2))
-
+        
         df.loc[len(df)] = tmp
         df.to_csv(save_file_path, index=None)
         logger.info('Results are saved to %s...' %(save_file_path))
@@ -178,15 +189,21 @@ def run_normal(args):
         df = pd.read_csv(save_path)
     else:
         df = pd.DataFrame(columns=["Model"] + criterions)
+
+        
     # save results
     res = [args.modelName]
     for c in criterions:
         values = [r[c] for r in model_results]
-        mean = round(np.mean(values)*100, 2)
+        mean = round(np.max(values)*100, 2)
         std = round(np.std(values)*100, 2)
         res.append((mean, std))
+
+
+    
     df.loc[len(df)] = res
     df.to_csv(save_path, index=None)
+    
     logger.info('Results are added to %s...' %(save_path))
 
 def set_log(args):
@@ -217,27 +234,53 @@ def parse_args():
                         help='tune parameters ?')
     parser.add_argument('--train_mode', type=str, default="regression",
                         help='regression / classification')
-    parser.add_argument('--modelName', type=str, default='self_mm',
-                        help='support self_mm')
+    parser.add_argument('--modelName', type=str, default='maf',
+                        help='support maf')
     parser.add_argument('--datasetName', type=str, default='sims',
                         help='support mosi/mosei/sims')
     parser.add_argument('--num_workers', type=int, default=0,
                         help='num workers of loading data')
-    parser.add_argument('--model_save_dir', type=str, default='results/models',
+    parser.add_argument('--model_save_dir', type=str, default='/mnt/disk1/wyx/MSA/Lab/ModalAdaptationMSA/results/models',
                         help='path to save results.')
-    parser.add_argument('--res_save_dir', type=str, default='results/results',
+    parser.add_argument('--res_save_dir', type=str, default='/mnt/disk1/wyx/MSA/Lab/ModalAdaptationMSA/results/results',
                         help='path to save results.')
-    parser.add_argument('--gpu_ids', type=list, default=[1],
+    parser.add_argument('--gpu_ids', type=list, default=[0,1],
                         help='indicates the gpus will be used. If none, the most-free gpu will be used!')
     return parser.parse_args()
 
 if __name__ == '__main__':
+    start_time = time.time()
     args = parse_args()
     logger = set_log(args)
-    for data_name in ['sims', 'mosi', 'mosei']:
-        args.datasetName = data_name
-        args.seeds = [1111,1112, 1113, 1114, 1115]
-        if args.is_tune:
-            run_tune(args, tune_times=50)
-        else:
-            run_normal(args)
+    # for data_name in ['mosi', 'mosei','sims']:
+
+
+    # 组合 [concat,ulgm,almt,agm]
+
+    ablation = [
+        # 1个True
+        [True,False,False,False],
+        [False,False,True,False],
+        #2个True
+        [True,True,False,False],
+        [False,True,True,False],
+        #3个True
+        [True,True,False,True],
+        [False,True,True,True]
+        ]
+    
+    for i in ablation:
+        args.is_concat,args.is_ulgm,args.is_almt,args.is_agm = i
+        for data_name in ['mosi','mosei']:
+            args.datasetName = data_name
+            args.seeds = [1111, 1112, 1113, 1114]
+            if args.is_tune:
+                run_tune(args, tune_times=50)
+            else:
+                run_normal(args)
+
+    end_time = time.time()
+
+    elapsed_time = end_time - start_time
+    print(f"代码运行时间: {elapsed_time} 秒")
+

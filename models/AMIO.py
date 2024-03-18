@@ -14,7 +14,7 @@ from models.multiTask import *
 __all__ = ['AMIO']
 
 MODEL_MAP = {
-    'self_mm': SELF_MM
+    'maf': MAF
 }
 
 class AMIO(nn.Module):
@@ -28,7 +28,7 @@ class AMIO(nn.Module):
                 args.seq_lens = self.alignNet.get_seq_len()
         lastModel = MODEL_MAP[args.modelName]
         self.Model = lastModel(args)
-
+        
     def forward(self, text_x, audio_x, video_x):
         if(self.need_model_aligned):
             text_x, audio_x, video_x = self.alignNet(text_x, audio_x, video_x)

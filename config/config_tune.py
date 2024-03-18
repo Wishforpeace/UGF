@@ -10,7 +10,7 @@ class ConfigTune():
         self.globalArgs = args
         # hyper parameters for models
         HYPER_MODEL_MAP = {
-            'self_mm': self.__SELF_MM
+            'MAF': self.__MAF
         }
         # hyper parameters for datasets
         HYPER_DATASET_MAP = self.__datasetCommonParams()
@@ -29,7 +29,7 @@ class ConfigTune():
                             ))
     
     def __datasetCommonParams(self):
-        root_dataset_dir = '/home/sharing/disk3/dataset/multimodal-sentiment-dataset/StandardDatasets'
+        root_dataset_dir = '/mnt/disk1/wyx/datasets/MSADatasets'
         tmp = {
             'mosi':{
                 'aligned': {
@@ -77,7 +77,7 @@ class ConfigTune():
             },
             'sims':{
                 'unaligned': {
-                    'dataPath': os.path.join(root_dataset_dir, 'SIMS/Processed/features/unaligned_39.pkl'),
+                    'dataPath': os.path.join(root_dataset_dir, 'SIMS/Processed/unaligned_39.pkl'),
                     # (batch_size, seq_lens, feature_dim)
                     'seq_lens': (39, 400, 55), # (text, audio, video)
                     'feature_dims': (768, 33, 709), # (text, audio, video)
@@ -90,7 +90,8 @@ class ConfigTune():
         }
         return tmp
 
-    def __SELF_MM(self):
+    def __MAF(self):
+        common_post_dim = random.choice([32, 64, 128])
         tmp = {
             'commonParas':{
                 'need_data_aligned': False,
@@ -99,15 +100,17 @@ class ConfigTune():
                 'use_bert': True,
                 'use_finetune': True,
                 'save_labels': False,
-                'early_stop': 8,
-                'update_epochs': 4,
+                'early_stop': random.choice([4,8,16]),
+                'update_epochs': random.choice([2,4,8]),
+                'AHL_depth':3,
+                'fusion_layer_depth':2,
             },
             'debugParas':{
                 'd_paras': ['batch_size', 'learning_rate_bert','learning_rate_audio', 'learning_rate_video', \
                             'learning_rate_other', 'weight_decay_bert', 'weight_decay_other', 
                             'weight_decay_audio', 'weight_decay_video',\
-                            'a_lstm_hidden_size', 'v_lstm_hidden_size', 'text_out', 'audio_out', 'video_out',\
-                            'a_lstm_dropout', 'v_lstm_dropout', 't_bert_dropout', 'post_fusion_dim', 'post_text_dim', 'post_audio_dim', \
+                            'text_out', 'audio_out', 'video_out',\
+                            't_bert_dropout', 'post_fusion_dim', 'post_text_dim', 'post_audio_dim', \
                             'post_video_dim', 'post_fusion_dropout', 'post_text_dropout', 'post_audio_dropout', 'post_video_dropout', 'H'],
                 'batch_size': random.choice([16, 32]),
                 'learning_rate_bert': random.choice([5e-5]),
@@ -118,26 +121,20 @@ class ConfigTune():
                 'weight_decay_audio': random.choice([0.0, 0.001, 0.01]),
                 'weight_decay_video': random.choice([0.0, 0.001, 0.01]),
                 'weight_decay_other': random.choice([0.001, 0.01]),
-                # feature subNets
-                'a_lstm_hidden_size': random.choice([16, 32]),
-                'v_lstm_hidden_size': random.choice([32, 64]),
-                'a_lstm_layers': 1,
-                'v_lstm_layers': 1,
                 'text_out': 768,
-                'audio_out': random.choice([16]),
-                'video_out': random.choice([32]), 
-                'a_lstm_dropout': random.choice([0.0]),
-                'v_lstm_dropout': random.choice([0.0]),
+                'audio_out': common_post_dim,
+                'video_out': common_post_dim, 
                 't_bert_dropout':random.choice([0.1]),
-                # post feature
-                'post_fusion_dim': random.choice([64, 128]),
-                'post_text_dim':random.choice([32, 64]),
-                'post_audio_dim': random.choice([16, 32]),
-                'post_video_dim': random.choice([16, 32]),
+                'post_fusion_dim': common_post_dim,
+                'post_text_dim':common_post_dim,
+                'post_audio_dim': common_post_dim,
+                'post_video_dim': common_post_dim,
+                'nums_head':random.choice([2,4,8]),
                 'post_fusion_dropout': random.choice([0.1, 0.0]),
                 'post_text_dropout': random.choice([0.1, 0.0]),
                 'post_audio_dropout': random.choice([0.1, 0.0]),
                 'post_video_dropout': random.choice([0.1, 0.0]),
+                'H': 3.0
             }
         }
         return tmp
@@ -164,7 +161,7 @@ if __name__ == "__main__":
                             help='path to save results.')
         parser.add_argument('--data_dir', type=str, default='/home/sharing/disk3/dataset/multimodal-sentiment-dataset',
                             help='path to data directory')
-        parser.add_argument('--gpu_ids', type=list, default=[2],
+        parser.add_argument('--gpu_ids', type=list, default=[0],
                             help='indicates the gpus will be used.')
         return parser.parse_args()
         

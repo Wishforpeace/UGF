@@ -9,7 +9,7 @@ import numpy as np
 from glob import glob
 from tqdm import tqdm
 from PIL import Image
-from facenet_pytorch import MTCNN, InceptionResnetV1
+
 
 import torch
 from transformers import BertTokenizer, BertModel

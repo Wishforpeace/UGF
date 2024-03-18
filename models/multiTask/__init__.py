@@ -1,3 +1,3 @@
-from models.multiTask.SELF_MM import SELF_MM
+from models.multiTask.MAF import MAF
 
-__all__ = ['SELF_MM']
+__all__ = ['MAF']
