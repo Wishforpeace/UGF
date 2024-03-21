@@ -14,7 +14,7 @@ import torch.nn.functional as F
 # from pytorch_transformers.optimization import AdamW, WarmupLinearSchedule
 
 # from transformers.tokenization import BertTokenizer
-from models.subNets.BertTextEncoder import BertTextEncoder
+from ModalAdaptationMSA.models.subNets.BertTextEncoderFinetune import BertTextEncoder
 
 class TextPre(object):
     """A single set of features of data."""

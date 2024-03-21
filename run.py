@@ -7,6 +7,7 @@ import pynvml
 import logging
 import argparse
 import sys
+import datetime
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
@@ -14,8 +15,8 @@ import torch.nn as nn
 from models.AMIO import AMIO
 from trains.ATIO import ATIO
 from data.load_data import MMDataLoader
-from config.config_tune import ConfigTune
-from config.config_regression import ConfigRegression
+from config.config import ConfigPretrain
+
 
 
 os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"
@@ -27,11 +28,13 @@ def setup_seed(seed):
     random.seed(seed)
     torch.backends.cudnn.deterministic = True
 
-def run(args):
-    if not os.path.exists(args.model_save_dir):
-        os.makedirs(args.model_save_dir)
-    args.model_save_path = os.path.join(args.model_save_dir,\
-                                        f'{args.modelName}-{args.datasetName}-{args.train_mode}.pth')
+def run(args,seed):
+    model_save_path = args.model_save_dir+f'/{str(seed)}/'
+    if not os.path.exists(model_save_path):
+        os.makedirs(model_save_path)
+    
+    args.model_save_path = model_save_path
+
     
     if len(args.gpu_ids) == 0 and torch.cuda.is_available():
         # load free-most gpu
@@ -67,8 +70,10 @@ def run(args):
                 # print(p)
         return answer
     logger.info(f'The model has {count_parameters(model)} trainable parameters')
+    
     # using multiple gpus
     if using_cuda and len(args.gpu_ids) > 1:
+        args.parallel = True
         model = torch.nn.DataParallel(model,
                                       device_ids=args.gpu_ids,
                                       output_device=args.gpu_ids[0])
@@ -76,28 +81,24 @@ def run(args):
     atio = ATIO().getTrain(args)
     # do train
     atio.do_train(model, dataloader)
-    # load pretrained model
-    assert os.path.exists(args.model_save_path)
-    model.load_state_dict(torch.load(args.model_save_path))
 
 
-    model.to(device)
+    
 
-
+    results = atio.do_test(model=model, dataloader=dataloader['test'],mode='TEST')
     # do test
-    if args.tune_mode:
-        # using valid dataset to debug hyper parameters
-        results = atio.do_test(model, dataloader['valid'], mode="VALID")
-    else:
-        results = atio.do_test(model, dataloader['test'], mode="TEST")
-
+   
     del model
+
+
+
     torch.cuda.empty_cache()
     gc.collect()
 
     return results
 
-def run_tune(args, tune_times=50):
+
+def run_finetune(args, tune_times=50):
     args.res_save_dir = os.path.join(args.res_save_dir, 'tunes')
     init_args = args
     has_debuged = [] # save used paras
@@ -150,24 +151,26 @@ def run_tune(args, tune_times=50):
         
         for col in results[0].keys():
             values = [r[col] for r in results]
-           
             tmp.append(round(sum(values) * 100 / len(values), 2))
         
         df.loc[len(df)] = tmp
         df.to_csv(save_file_path, index=None)
         logger.info('Results are saved to %s...' %(save_file_path))
 
-def run_normal(args):
-    args.res_save_dir = os.path.join(args.res_save_dir, 'normals')
+
+
+
+def run_pretrain(args):
+    args.res_save_dir = os.path.join(args.res_save_dir, args.train_mode)
     init_args = args
-    model_results = []
+    model_results = {}
     seeds = args.seeds
     # run results
     for i, seed in enumerate(seeds):
         args = init_args
         # load config
-        if args.train_mode == "regression":
-            config = ConfigRegression(args)
+        if args.train_mode == "pretrain":
+            config = ConfigPretrain(args)
         args = config.get_config()
         setup_seed(seed)
         args.seed = seed
@@ -175,36 +178,40 @@ def run_normal(args):
         logger.info(args)
         # runnning
         args.cur_time = i+1
-        test_results = run(args)
+        test_results = run(args,seed)
         # restore results
-        model_results.append(test_results)
+        model_results[seed]=test_results
 
-    criterions = list(model_results[0].keys())
+
+    first_seed = list(model_results.keys())[0]
+    criterions = list(model_results[first_seed].keys())
+
+    
     # load other results
-    save_path = os.path.join(args.res_save_dir, \
-                        f'{args.datasetName}-{args.train_mode}.csv')
+    save_path = os.path.join(args.res_save_dir,
+                        args.modelName + '-' + args.datasetName + '-' + args.train_mode + '-' + datetime.datetime.now().strftime('%Y-%m-%d-%H%M') +'.csv')
+
     if not os.path.exists(args.res_save_dir):
         os.makedirs(args.res_save_dir)
+
+
     if os.path.exists(save_path):
         df = pd.read_csv(save_path)
     else:
-        df = pd.DataFrame(columns=["Model"] + criterions)
+        df = pd.DataFrame(columns=["Model","Seed"] + criterions)
 
-        
-    # save results
-    res = [args.modelName]
-    for c in criterions:
-        values = [r[c] for r in model_results]
-        mean = round(np.max(values)*100, 2)
-        std = round(np.std(values)*100, 2)
-        res.append((mean, std))
+    # Populate the DataFrame with the new results
+    for seed, results in model_results.items():
+        row = {"Model": args.modelName, "Seed": seed}
+        row.update(results)
+        df = df.append(row, ignore_index=True)
 
+    df.to_csv(save_path, index=False)
 
-    
-    df.loc[len(df)] = res
-    df.to_csv(save_path, index=None)
-    
     logger.info('Results are added to %s...' %(save_path))
+
+   
+
 
 def set_log(args):
     log_file_path = f'logs/{args.modelName}-{args.datasetName}.log'
@@ -228,12 +235,21 @@ def set_log(args):
     logger.addHandler(ch)
     return logger
 
+
+# def run_mono_modal(args):
+    
+
+
+
+
+
+
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--is_tune', type=bool, default=False,
                         help='tune parameters ?')
-    parser.add_argument('--train_mode', type=str, default="regression",
-                        help='regression / classification')
+    parser.add_argument('--train_mode', type=str, default="pretrain",
+                        help='pretrain / finetune')
     parser.add_argument('--modelName', type=str, default='maf',
                         help='support maf')
     parser.add_argument('--datasetName', type=str, default='sims',
@@ -259,25 +275,38 @@ if __name__ == '__main__':
 
     ablation = [
         # 1个True
-        [True,False,False,False],
+        # [True,False,False,False],
         [False,False,True,False],
-        #2个True
-        [True,True,False,False],
-        [False,True,True,False],
-        #3个True
-        [True,True,False,True],
-        [False,True,True,True]
+        # #2个True
+        # [True,True,False,False],
+        # [False,True,True,False],
+        # #3个True
+        # [True,True,False,True],
+        # [False,True,True,True]
         ]
     
-    for i in ablation:
-        args.is_concat,args.is_ulgm,args.is_almt,args.is_agm = i
-        for data_name in ['mosi','mosei']:
+    # for i in ablation:
+    #     args.is_concat,args.is_ulgm,args.is_almt,args.is_agm = i
+    #     for data_name in ['mosi']:
+    #         args.datasetName = data_name
+    #         args.seeds = [1111, 1112, 1113, 1114]
+    #         if args.is_tune:
+    #             run_finetune(args, tune_times=50)
+    #         else:
+    #             run_pretrain(args)
+                # run_mono_modal(args)
+    args.seeds = [1111, 1112,1113,1114]
+    for i in ['text','vision','audio']:
+        for data_name in ['mosi']:
+            args.modelName = i
             args.datasetName = data_name
-            args.seeds = [1111, 1112, 1113, 1114]
             if args.is_tune:
-                run_tune(args, tune_times=50)
+                run_finetune(args, tune_times=50)
             else:
-                run_normal(args)
+                run_pretrain(args)
+
+
+
 
     end_time = time.time()
 

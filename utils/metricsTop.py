@@ -4,23 +4,23 @@ from sklearn.metrics import classification_report
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import precision_recall_fscore_support
 from sklearn.metrics import accuracy_score, f1_score
-
+import sys
 __all__ = ['MetricsTop']
 
 class MetricsTop():
     def __init__(self, train_mode):
-        if train_mode == "regression":
-            self.metrics_dict = {
+        # if train_mode == "regression":
+        self.metrics_dict = {
                 'MOSI': self.__eval_mosi_regression,
                 'MOSEI': self.__eval_mosei_regression,
                 'SIMS': self.__eval_sims_regression
             }
-        else:
-            self.metrics_dict = {
-                'MOSI': self.__eval_mosi_classification,
-                'MOSEI': self.__eval_mosei_classification,
-                'SIMS': self.__eval_sims_classification
-            }
+        # else:
+        # self.metrics_dict = {
+        #         'MOSI': self.__eval_mosi_classification,
+        #         'MOSEI': self.__eval_mosei_classification,
+        #         'SIMS': self.__eval_sims_classification
+        # }
 
     def __eval_mosi_classification(self, y_pred, y_true):
         """
@@ -32,6 +32,7 @@ class MetricsTop():
         """
         y_pred = y_pred.cpu().detach().numpy()
         y_true = y_true.cpu().detach().numpy()
+        
         # three classes
         y_pred_3 = np.argmax(y_pred, axis=1)
         Mult_acc_3 = accuracy_score(y_pred_3, y_true)
@@ -55,7 +56,6 @@ class MetricsTop():
         Non0_F1_score = f1_score(y_true_2, y_pred_2, average='weighted')
 
         eval_results = {
-            
             "Has0_acc_2":  round(Has0_acc_2, 4),
             "Has0_F1_score": round(Has0_F1_score, 4),
             "Non0_acc_2":  round(Non0_acc_2, 4),

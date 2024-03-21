@@ -3,11 +3,15 @@ import argparse
 
 from utils.functions import Storage
 
-class ConfigRegression():
+class ConfigPretrain():
     def __init__(self, args):
         # hyper parameters for models
         HYPER_MODEL_MAP = {
-            'maf': self.__MAF
+            'maf': self.__MAF,
+            'text':self.__MAF,
+            'vision':self.__MAF,
+            'audio':self.__MAF,
+
         }
         # hyper parameters for datasets
         HYPER_DATASET_MAP = self.__datasetCommonParams()
@@ -34,7 +38,7 @@ class ConfigRegression():
                     # 'dataPath': os.path.join(root_dataset_dir, 'MOSI/new_mosi_data.pkl'),
                     'dataPath': os.path.join(root_dataset_dir, 'MOSI/Processed/aligned_50.pkl'),
                     'seq_lens': (50, 50, 50),
-                    # (text, audio, video)
+                    # (text, audio, vision)
                     'feature_dims': (768, 5, 20),
                     'train_samples': 1284,
                     'num_classes': 3,
@@ -44,8 +48,8 @@ class ConfigRegression():
                 'unaligned': {
                     # 'dataPath': os.path.join(root_dataset_dir, 'MOSI/new_mosi_data.pkl'),
                     'dataPath': os.path.join(root_dataset_dir, 'MOSI/Processed/unaligned_50.pkl'),
-                    'seq_lens': (50, 50, 50),
-                    # (text, audio, video)
+                    'seq_lens': (50, 375, 500),
+                    # (text, audio, vision)
                     # 'feature_dims': (768, 64, 64),
                     'feature_dims': (768, 5, 20),
                     'train_samples': 1284,
@@ -58,7 +62,7 @@ class ConfigRegression():
                 'aligned': {
                     'dataPath': os.path.join(root_dataset_dir, 'MOSEI/Processed/aligned_50.pkl'),
                     'seq_lens': (50, 50, 50),
-                    # (text, audio, video)
+                    # (text, audio, vision)
                     'feature_dims': (768, 74, 35),
                     'train_samples': 16326,
                     'num_classes': 3,
@@ -68,7 +72,7 @@ class ConfigRegression():
                 'unaligned': {
                     'dataPath': os.path.join(root_dataset_dir, 'MOSEI/Processed/unaligned_50.pkl'),
                     'seq_lens': (50, 500, 375),
-                    # (text, audio, video)
+                    # (text, audio, vision)
                     'feature_dims': (768, 74, 35),
                     'train_samples': 16326,
                     'num_classes': 3,
@@ -80,8 +84,8 @@ class ConfigRegression():
                 'unaligned': {
                     'dataPath': os.path.join(root_dataset_dir, 'SIMS/Processed/unaligned_39.pkl'),
                     # (batch_size, seq_lens, feature_dim)
-                    'seq_lens': (39, 400, 55), # (text, audio, video)
-                    'feature_dims': (768, 33, 709), # (text, audio, video)
+                    'seq_lens': (39, 400, 55), # (text, audio, vision)
+                    'feature_dims': (768, 33, 709), # (text, audio, vision)
                     'train_samples': 1368,
                     'num_classes': 3,
                     'language': 'cn',
@@ -113,7 +117,7 @@ class ConfigRegression():
                 'lr_scalar':'onecyclewarmup',
                 'optim':'adamw',
                 'learning_rate':1e-4,
-                'weight_decay':1e-4,
+                'weight_decay':1e-3,
                 'lr_decay_step':10,
                 'lr_decay_ratio':0.1
             },
@@ -122,19 +126,28 @@ class ConfigRegression():
                 'mosi':{
                     # the batch_size of each epoch is update_epochs * batch_size
                     'batch_size': 64,
-                    'epochs':50,
+                    'text_epochs':150,
+                    'vision_epochs':100,
+                    'audio_epochs':100,
+                    'encoder_fea_dim':768,
                     'text_out': 768, 
                     'audio_out': 16,
-                    'video_out': 32, 
+                    'vision_out': 32, 
+                    'vision_nhead':8,
+                    'vision_tf_num_layers': 2,
+                    'audio_out': 32, 
+                    'audio_nhead':8,
+                    'audio_tf_num_layers': 2,
+                    'proj_fea_dim':768,
                     # post feature
                     'post_fusion_dim': 128,
                     'post_text_dim':128,
                     'post_audio_dim': 128,
-                    'post_video_dim': 128,
+                    'post_vision_dim': 128,
                     'post_fusion_dropout': 0.3,
                     'post_text_dropout': 0.3,
                     'post_audio_dropout': 0.3,
-                    'post_video_dropout': 0.3,
+                    'post_vision_dropout': 0.3,
                     # res
                     'H': 3.0
                 },
@@ -144,16 +157,16 @@ class ConfigRegression():
                     'epochs':100,
                     'text_out': 768, 
                     'audio_out': 16,
-                    'video_out': 32, 
+                    'vision_out': 32, 
                     # post feature
                     'post_fusion_dim': 128,
                     'post_text_dim':128,
                     'post_audio_dim': 128,
-                    'post_video_dim': 128,
+                    'post_vision_dim': 128,
                     'post_fusion_dropout': 0.3,
                     'post_text_dropout': 0.3,
                     'post_audio_dropout': 0.3,
-                    'post_video_dropout': 0.3,
+                    'post_vision_dropout': 0.3,
                     # res
                     'H': 3.0
                 },
@@ -163,7 +176,7 @@ class ConfigRegression():
                     'epochs':50,
                     'text_out': 768, 
                     'audio_out': 16,
-                    'video_out': 32, 
+                    'vision_out': 32, 
                     'a_lstm_dropout': 0.0,
                     'v_lstm_dropout': 0.0,
                     't_bert_dropout':0.1,
@@ -171,11 +184,11 @@ class ConfigRegression():
                     'post_fusion_dim': 128,
                     'post_text_dim':128,
                     'post_audio_dim': 128,
-                    'post_video_dim': 128,
+                    'post_vision_dim': 128,
                     'post_fusion_dropout': 0.1,
                     'post_text_dropout': 0.1,
                     'post_audio_dropout': 0.1,
-                    'post_video_dropout': 0.1,
+                    'post_vision_dropout': 0.1,
                     # res
                     'H': 1.0
                 },

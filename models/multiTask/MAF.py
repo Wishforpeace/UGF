@@ -7,7 +7,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.autograd.function import Function
 from torch.nn.utils.rnn import pad_sequence, pack_padded_sequence, pad_packed_sequence
-from models.subNets.BertTextEncoder import BertTextEncoder
+from models.subNets.BertTextEncoderFinetune import BertTextEncoder
 from models.almt.almt_layer import Transformer, CrossTransformer, HhyperLearningEncoder
 from einops import repeat
 
@@ -29,16 +29,17 @@ class MAF(nn.Module):
         self.text_model = BertTextEncoder(language=args.language, use_finetune=args.use_finetune)
 
         # audio-vision subnets
-        text_in,audio_in, video_in = args.feature_dims
+        text_in, audio_in, vision_in = args.feature_dims
+        text_patches, audio_patches, vision_patches = args.seq_lens
         
 
         self.proj_t = Transformer(num_frames=50, save_hidden=False, token_len=8, dim=args.post_text_dim, depth=1, heads=8, mlp_dim=128)
         self.proj_a = Transformer(num_frames=50, save_hidden=False, token_len=8, dim=args.post_audio_dim, depth=1, heads=8, mlp_dim=128)
-        self.proj_v = Transformer(num_frames=50, save_hidden=False, token_len=8, dim=args.post_video_dim, depth=1, heads=8, mlp_dim=128)
+        self.proj_v = Transformer(num_frames=50, save_hidden=False, token_len=8, dim=args.post_vision_dim, depth=1, heads=8, mlp_dim=128)
 
 
         # self.text_attention = MultiheadSelfAttentionWithPooling(embed_size=args.post_text_dim,num_heads=args.nums_head)
-        # self.video_attention = MultiheadSelfAttentionWithPooling(embed_size=args.post_video_dim,num_heads=args.nums_head)
+        # self.vision_attention = MultiheadSelfAttentionWithPooling(embed_size=args.post_vision_dim,num_heads=args.nums_head)
         # self.audio_attention = MultiheadSelfAttentionWithPooling(embed_size=args.post_audio_dim,num_heads=args.nums_head)
         # self.fusion_attention= MultiheadSelfAttentionWithPooling(embed_size=args.post_fusion_dim,num_heads=args.nums_head)
 
@@ -68,11 +69,11 @@ class MAF(nn.Module):
         self.post_audio_layer_2 = nn.Linear(args.post_audio_dim, args.post_audio_dim)
         self.post_audio_layer_3 = nn.Linear(args.post_audio_dim, 1)
 
-        # the classify layer for video
-        self.post_video_dropout = nn.Dropout(p=args.post_video_dropout)
-        self.post_video_layer_1 = nn.Linear(video_in, args.post_video_dim)
-        self.post_video_layer_2 = nn.Linear(args.post_video_dim, args.post_video_dim)
-        self.post_video_layer_3 = nn.Linear(args.post_video_dim, 1)
+        # the classify layer for vision
+        self.post_vision_dropout = nn.Dropout(p=args.post_vision_dropout)
+        self.post_vision_layer_1 = nn.Linear(vision_in, args.post_vision_dim)
+        self.post_vision_layer_2 = nn.Linear(args.post_vision_dim, args.post_vision_dim)
+        self.post_vision_layer_3 = nn.Linear(args.post_vision_dim, 1)
 
         # 特征融合
         if self.args.is_almt:
@@ -114,30 +115,28 @@ class MAF(nn.Module):
 
 
 
-    def forward(self, text, audio, video):
-        audio, audio_lengths = audio
-        video, video_lengths = video
+    def forward(self, text, audio, vision):
 
         
-        # print(f"video.size():{video.size()}")
+        # print(f"vision.size():{vision.size()}")
         # sys.exit(1)
         mask_len = torch.sum(text[:,1,:], dim=1, keepdim=True)
         text_lengths = mask_len.squeeze().int().detach().cpu()
         text = self.text_model(text)
         
-        b = video.size(0)
+        b = vision.size(0)
         
         
         
         # 线性变化，统一为[batch_size,128]
         text_h = F.relu(self.post_text_layer_1(text), inplace=False)
-        video_h = F.relu(self.post_video_layer_1(video), inplace=False)
+        vision_h = F.relu(self.post_vision_layer_1(vision), inplace=False)
         audio_h = F.relu(self.post_audio_layer_1(audio), inplace=False)
         
        
 
         proj_t = self.proj_t(text_h)
-        proj_v = self.proj_v(video_h)
+        proj_v = self.proj_v(vision_h)
         proj_a = self.proj_a(audio_h)
         if self.args.is_almt:
             h_hyper = repeat(self.h_hyper, '1 n d -> b n d', b = b)
@@ -145,12 +144,11 @@ class MAF(nn.Module):
             h_v = proj_v[:,:8]
             h_a = proj_a[:,:8]
             h_t = F.relu(self.post_audio_layer_2(h_t),inplace=False)
-            h_v = F.relu(self.post_video_layer_2(h_v),inplace=False)
+            h_v = F.relu(self.post_vision_layer_2(h_v),inplace=False)
             h_a = F.relu(self.post_audio_layer_2(h_a),inplace=False)
             h_t_list = self.text_encoder(h_t)
             h_hyper,attn_tt,attn_ta,attn_tv = self.h_hyper_layer(h_t_list, h_a, h_v, h_hyper)
             fusion_h = self.fusion_layer(h_hyper, h_t_list[-1])
-                
         else:
             fusion_h = torch.cat((proj_t,proj_a[:,],proj_v),dim=-1)
        
@@ -158,7 +156,7 @@ class MAF(nn.Module):
         fusion_h = self.post_fusion_dropout(fusion_h)
 
         proj_t = self.post_text_dropout(proj_t)
-        proj_v = self.post_video_dropout(proj_v)
+        proj_v = self.post_vision_dropout(proj_v)
         proj_a = self.post_audio_dropout(proj_a)
 
        
@@ -233,38 +231,45 @@ class MAF(nn.Module):
        
         text_feature = self.post_text_layer_2(proj_t[:,-1,:])
         audio_feature = self.post_audio_layer_2(proj_t[:,-1,:])
-        video_feature = self.post_video_layer_2(proj_v[:,-1,:])
+        vision_feature = self.post_vision_layer_2(proj_v[:,-1,:])
 
         if self.args.is_agm:
             text_feature = self.m_t_o(text_feature)
             audio_feature = self.m_a_o(audio_feature)
-            video_feature = self.m_v_o(video_feature)
+            vision_feature = self.m_v_o(vision_feature)
             
         # text_feature = self.text_attention(proj_t)
-        # video_feature = self.video_attention(proj_v)  
+        # vision_feature = self.vision_attention(proj_v)  
         # audio_feature = self.audio_attention(proj_a)
        
     
        
         output_text = self.post_text_layer_3(text_feature)
         output_audio = self.post_audio_layer_3(audio_feature)
-        output_video = self.post_video_layer_3(video_feature)
+        output_vision = self.post_vision_layer_3(vision_feature)
 
 
         res = {
             'M': output_fusion, 
             'T': output_text,
             'A': output_audio,
-            'V': output_video,
+            'V': output_vision,
             'Feature_t': text_feature,
             'Feature_a': audio_feature,
-            'Feature_v': video_feature,
+            'Feature_v': vision_feature,
             'Feature_f': fusion_feature,
             # 't_attention_constant':t_attention_constant,
             # 'a_attention_constant':a_attention_constant,
             # 'v_attention_constant':v_attention_constant,
         }
+
+
+        
         return res
+
+
+    # def load_model(self,name, load_pretrain=False):
+        
 
 
 

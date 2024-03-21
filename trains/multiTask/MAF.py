@@ -18,13 +18,14 @@ import sys
 from utils.functions import dict_to_str
 from utils.metricsTop import MetricsTop
 from utils.scheduler import build_optimizer
+from utils.common import check_and_save
 from transformers import get_linear_schedule_with_warmup
 
 logger = logging.getLogger('MSA')
 
 class MAF():
     def __init__(self, args):
-        assert args.train_mode == 'regression'
+        # assert args.train_mode == 'regression'
 
         self.args = args
         self.args.tasks = "MTAV"
@@ -87,7 +88,8 @@ class MAF():
 
 
     def do_train(self, model, dataloader):
-        optimizer,scheduler = build_optimizer(args=self.args,model=model)
+        check = {'Loss': 10000, 'MAE': 100}
+        # optimizer,scheduler = build_optimizer(args=self.args,model=model)
         
         
         # bert_no_decay = ['bias', 'LayerNorm.bias', 'LayerNorm.weight']
@@ -115,9 +117,10 @@ class MAF():
         #     {'params': model_params_other, 'weight_decay': self.args.weight_decay_other, 'lr': self.args.learning_rate_other}
         # ]
         # optimizer = optim.Adam(optimizer_grouped_parameters)
-       
-
-
+        if len(self.args.gpu_ids)>1:
+            optimizer =  optim.Adam(model.module.Model.parameters(),lr=self.args.learning_rate)
+        else:
+            optimizer =  optim.Adam(model.Model.parameters(),lr=self.args.learning_rate)
 
 
         saved_labels = {}
@@ -161,7 +164,10 @@ class MAF():
                     
                     # 衡量模态得分
                     score = {}
-                    if left_epochs == self.args.update_epochs:
+                    if self.args.is_ulgm:
+                        if left_epochs == self.args.update_epochs:
+                            optimizer.zero_grad()
+                    else:
                         optimizer.zero_grad()
 
                     left_epochs -= 1
@@ -178,14 +184,14 @@ class MAF():
                     cur_id = batch_data['id']
                     ids.extend(cur_id)
 
-                    if not self.args.need_data_aligned:
-                        audio_lengths = batch_data['audio_lengths'].to(self.args.device)
-                        vision_lengths = batch_data['vision_lengths'].to(self.args.device)
-                    else:
-                        audio_lengths, vision_lengths = 0, 0
+                    # if not self.args.need_data_aligned:
+                    #     audio_lengths = batch_data['audio_lengths'].to(self.args.device)
+                    #     vision_lengths = batch_data['vision_lengths'].to(self.args.device)
+                    # else:
+                    #     audio_lengths, vision_lengths = 0, 0
                    
 
-                    outputs = model(text, (audio, audio_lengths), (vision, vision_lengths))
+                    outputs = model(text, audio, vision)
                     # update features
                     f_fusion = outputs['Feature_f'].detach()
                     f_text = outputs['Feature_t'].detach()
@@ -277,35 +283,40 @@ class MAF():
                         if grad_max > 1.0 and grad_min < 1.0:
                             nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
 
+
+
                     train_loss += loss.item()
                     
                     
                     # update parameters
-                    if not left_epochs:
-                        # update
+                    if self.args.is_ulgm:
+                        if not left_epochs:
+                            # update
+                            optimizer.step()
+                            left_epochs = self.args.update_epochs
+                    else:
                         optimizer.step()
-                        left_epochs = self.args.update_epochs
             
 
-            lr_history.append(optimizer.param_groups[0]['lr'])
-            scheduler.step()
+           
+            # scheduler.step()
+                        
+
             train_loss = train_loss / len(dataloader['train'])
             logger.info("TRAIN-(%s) (%d/%d/%d)>> loss: %.4f " % (self.args.modelName, \
                         epoch-best_epoch, epoch, self.args.cur_time, train_loss))
+            
+
             for m in self.args.tasks:
                 pred, true = torch.cat(y_pred[m]), torch.cat(y_true[m])
                 train_results = self.metrics(pred, true)
                 logger.info('%s: >> ' %(m) + dict_to_str(train_results))
             # validation
+                
             val_results = self.do_test(model, dataloader['valid'], mode="VAL")
-            cur_valid = val_results[self.args.KeyEval]
-            # save best model
-            isBetter = cur_valid <= (best_valid - 1e-6) if min_or_max == 'min' else cur_valid >= (best_valid + 1e-6)
-            if isBetter:
-                best_valid, best_epoch = cur_valid, epoch
-                # save model
-                torch.save(model.cpu().state_dict(), self.args.model_save_path)
-                model.to(self.args.device)
+            check = check_and_save(model, val_results, check, save_model=True, name='maf_fusion',parallel=self.args.parallel)
+
+            
             # save labels
             if self.args.save_labels:
                 tmp_save = {k: v.cpu().numpy() for k, v in self.label_map.items()}
@@ -337,15 +348,11 @@ class MAF():
                     vision = batch_data['vision'].to(self.args.device)
                     audio = batch_data['audio'].to(self.args.device)
                     text = batch_data['text'].to(self.args.device)
-                    if not self.args.need_data_aligned:
-                        audio_lengths = batch_data['audio_lengths'].to(self.args.device)
-                        vision_lengths = batch_data['vision_lengths'].to(self.args.device)
-                    else:
-                        audio_lengths, vision_lengths = 0, 0
+                    
                     # audio_lengths = audio_lengths.cpu().to(torch.int64)
                     # vision_lengths = vision_lengths.cpu().to(torch.int64)
                     labels_m = batch_data['labels']['M'].to(self.args.device).view(-1)
-                    outputs = model(text, (audio, audio_lengths), (vision, vision_lengths))
+                    outputs = model(text, audio, vision)
                     loss = self.weighted_loss(y_pred=outputs['M'], y_true=labels_m,task='test')
                     eval_loss += loss.item()
                     y_pred['M'].append(outputs['M'].cpu())
