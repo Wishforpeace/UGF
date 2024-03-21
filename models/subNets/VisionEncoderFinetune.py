@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from models.subNets.BaseClassifier import BaseClassifier
 from models.subNets.TfEncoder import  TfEncoder
+from models.multiTask.MAF import MultiheadSelfAttentionWithPooling
 import sys
 
 class VisionEncoder(nn.Module):
@@ -21,6 +22,7 @@ class VisionEncoder(nn.Module):
                                 num_layers=num_layers,
                                 dropout=drop_out,
                                 activation='gelu')
+        self.multiheadPooling = MultiheadSelfAttentionWithPooling(embed_size=encoder_fea_dim,num_heads=nhead)
 
         self.device = self.args.device
         self.encoder.device = self.device
@@ -33,7 +35,7 @@ class VisionEncoder(nn.Module):
         
         x = self.encoder(src=vision, has_mask=False, src_key_padding_mask=key_padding_mask)
         x = self.layernorm(x)
-        x = torch.mean(x, dim=-2, keepdim=True)
+        x = self.multiheadPooling(x)
        # 考虑多头注意力池化
         return x
 
@@ -78,7 +80,7 @@ class VisionEncoderPretrain(nn.Module):
        
     def save_model(self):
         # save all modules
-        path = self.args.model_save_path + f'{self.args.modelName}-{self.args.datasetName}-vision'
+        path = self.args.model_save_path + f'{self.args.datasetName}-vision'
         encoder_path = path + '-encoder.pth'
         decoder_path = path + '-decoder.pth'
         torch.save(self.encoder.state_dict(), encoder_path)
@@ -88,7 +90,7 @@ class VisionEncoderPretrain(nn.Module):
         print(decoder_path)
 
     def load_model(self, module=None):
-        path = self.args.model_save_path + f'{self.args.modelName}-{self.args.datasetName}-vision'
+        path = self.args.model_save_path + f'{self.args.datasetName}-vision'
         encoder_path =  path + '-encoder.pth'
         decoder_path =  path+ '-decoder.pth'
 

@@ -81,7 +81,7 @@ class BertTextEncoderPretrain(nn.Module):
 
     def save_model(self):
         # save all modules
-        path = self.args.model_save_path + f'{self.args.modelName}-{self.args.datasetName}-text'
+        path = self.args.model_save_path + f'{self.args.datasetName}-text'
         encoder_path =  path + '-encoder.pth'
         decoder_path =  path+ '-decoder.pth'
         torch.save(self.encoder.state_dict(), encoder_path)
@@ -92,7 +92,7 @@ class BertTextEncoderPretrain(nn.Module):
 
 
     def load_model(self, module='all'):
-        path = self.args.model_save_path + f'{self.args.modelName}-{self.args.datasetName}-text'
+        path = self.args.model_save_path + f'{self.args.datasetName}-text'
         encoder_path =  path + '-encoder.pth'
         decoder_path =  path+ '-decoder.pth'
         print('model loaded from:')

@@ -1,238 +1,0 @@
-Start running text...
-<Storage{'is_tune': False, 'train_mode': 'pretrain', 'modelName': 'text', 'datasetName': 'mosi', 'num_workers': 0, 'model_save_dir': '/mnt/disk1/wyx/MSA/Lab/ModalAdaptationMSA/results/models', 'res_save_dir': '/mnt/disk1/wyx/MSA/Lab/ModalAdaptationMSA/results/results/pretrain', 'gpu_ids': [0, 1], 'seeds': [1111, 1112, 1113, 1114], 'dataPath': '/mnt/disk1/wyx/datasets/MSADatasets/MOSI/Processed/unaligned_50.pkl', 'seq_lens': (50, 375, 500), 'feature_dims': (768, 5, 20), 'train_samples': 1284, 'num_classes': 3, 'language': 'en', 'KeyEval': 'Loss', 'need_data_aligned': False, 'need_model_aligned': False, 'need_normalized': False, 'use_bert': True, 'use_finetune': True, 'save_labels': True, 'early_stop': 8, 'update_epochs': 2, 'warmup_steps': 2, 'AHL_depth': 3, 'fusion_layer_depth': 2, 'nums_head': 8, 'epsilon': 1, 'alpha': 1, 'modulation_starts ': 0, 'modulation_ends ': 50, 'lr_scalar': 'onecyclewarmup', 'optim': 'adamw', 'learning_rate': 0.0001, 'weight_decay': 0.001, 'lr_decay_step': 10, 'lr_decay_ratio': 0.1, 'batch_size': 64, 'text_epochs': 150, 'vision_epochs': 100, 'audio_epochs': 100, 'encoder_fea_dim': 768, 'text_out': 768, 'audio_out': 32, 'vision_out': 32, 'vision_nhead': 8, 'vision_tf_num_layers': 2, 'audio_nhead': 8, 'audio_tf_num_layers': 2, 'proj_fea_dim': 768, 'post_fusion_dim': 128, 'post_text_dim': 128, 'post_audio_dim': 128, 'post_vision_dim': 128, 'post_fusion_dropout': 0.3, 'post_text_dropout': 0.3, 'post_audio_dropout': 0.3, 'post_vision_dropout': 0.3, 'H': 3.0, 'seed': 1111}>
-Let's use 2 GPUs!
-train samples: (1284,)
-valid samples: (229,)
-test samples: (686,)
-The model has 109870081 trainable parameters
-TRAIN-(text) epoch(1)
-  0%|          | 0/21 [00:00<?, ?it/s]/home/stu/anaconda3/envs/MSA/lib/python3.9/site-packages/torch/nn/parallel/_functions.py:68: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
-  warnings.warn('Was asked to gather along dimension 0, but all '
-  5%|▍         | 1/21 [00:00<00:12,  1.57it/s] 14%|█▍        | 3/21 [00:00<00:04,  3.99it/s] 19%|█▉        | 4/21 [00:01<00:03,  4.65it/s] 24%|██▍       | 5/21 [00:01<00:03,  5.19it/s] 29%|██▊       | 6/21 [00:01<00:02,  5.60it/s] 33%|███▎      | 7/21 [00:01<00:02,  5.92it/s] 38%|███▊      | 8/21 [00:01<00:02,  6.16it/s] 43%|████▎     | 9/21 [00:01<00:01,  6.33it/s] 48%|████▊     | 10/21 [00:01<00:01,  6.44it/s] 52%|█████▏    | 11/21 [00:02<00:01,  6.54it/s] 57%|█████▋    | 12/21 [00:02<00:01,  6.60it/s] 62%|██████▏   | 13/21 [00:02<00:01,  6.65it/s] 67%|██████▋   | 14/21 [00:02<00:01,  6.68it/s] 71%|███████▏  | 15/21 [00:02<00:00,  6.69it/s] 76%|███████▌  | 16/21 [00:02<00:00,  6.58it/s] 81%|████████  | 17/21 [00:02<00:00,  6.62it/s] 86%|████████▌ | 18/21 [00:03<00:00,  6.66it/s] 90%|█████████ | 19/21 [00:03<00:00,  6.67it/s] 95%|█████████▌| 20/21 [00:03<00:00,  6.70it/s]100%|██████████| 21/21 [00:03<00:00,  6.55it/s]100%|██████████| 21/21 [00:03<00:00,  5.90it/s]
-TRAIN-(text) (1/1/1)>> loss: 2.5223 
-text: >>  Has0_acc_2: 0.5615  Has0_F1_score: 0.5050  Non0_acc_2: 0.5483  Non0_F1_score: 0.4904  Mult_acc_5: 0.1931  Mult_acc_7: 0.1931  MAE: 1.3232  Corr: -0.0002 
-  0%|          | 0/4 [00:00<?, ?it/s]/home/stu/anaconda3/envs/MSA/lib/python3.9/site-packages/torch/nn/parallel/_functions.py:68: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
-  warnings.warn('Was asked to gather along dimension 0, but all '
- 50%|█████     | 2/4 [00:00<00:00, 12.59it/s]100%|██████████| 4/4 [00:00<00:00, 12.77it/s]100%|██████████| 4/4 [00:00<00:00, 12.73it/s]
-VAL-(text) >> loss: 2.6971 
-T: >>  Has0_acc_2: 0.6216  Has0_F1_score: 0.4766  Non0_acc_2: 0.6216  Non0_F1_score: 0.4766  Mult_acc_5: 0.1351  Mult_acc_7: 0.1351  MAE: 1.4030  Corr: -0.0382  Loss: 2.6971 
-TRAIN-(text) epoch(2)
-model saved at:
-/mnt/disk1/wyx/MSA/Lab/ModalAdaptationMSA/results/models/1111/text-mosi-text-encoder.pth
-/mnt/disk1/wyx/MSA/Lab/ModalAdaptationMSA/results/models/1111/text-mosi-text-decoder.pth
-model saved at:
-/mnt/disk1/wyx/MSA/Lab/ModalAdaptationMSA/results/models/1111/text-mosi-text-encoder.pth
-/mnt/disk1/wyx/MSA/Lab/ModalAdaptationMSA/results/models/1111/text-mosi-text-decoder.pth
-  0%|          | 0/21 [00:00<?, ?it/s]/home/stu/anaconda3/envs/MSA/lib/python3.9/site-packages/torch/nn/parallel/_functions.py:68: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
-  warnings.warn('Was asked to gather along dimension 0, but all '
- 10%|▉         | 2/21 [00:00<00:02,  8.54it/s] 14%|█▍        | 3/21 [00:00<00:02,  7.67it/s] 19%|█▉        | 4/21 [00:00<00:02,  7.30it/s] 24%|██▍       | 5/21 [00:00<00:02,  7.09it/s] 29%|██▊       | 6/21 [00:00<00:02,  6.97it/s] 33%|███▎      | 7/21 [00:00<00:02,  6.89it/s] 38%|███▊      | 8/21 [00:01<00:01,  6.79it/s] 43%|████▎     | 9/21 [00:01<00:01,  6.78it/s] 48%|████▊     | 10/21 [00:01<00:01,  6.76it/s] 52%|█████▏    | 11/21 [00:01<00:01,  6.75it/s] 57%|█████▋    | 12/21 [00:01<00:01,  6.74it/s] 62%|██████▏   | 13/21 [00:01<00:01,  6.74it/s] 67%|██████▋   | 14/21 [00:02<00:01,  6.74it/s] 71%|███████▏  | 15/21 [00:02<00:00,  6.74it/s] 76%|███████▌  | 16/21 [00:02<00:00,  6.74it/s] 81%|████████  | 17/21 [00:02<00:00,  6.74it/s] 86%|████████▌ | 18/21 [00:02<00:00,  6.73it/s] 90%|█████████ | 19/21 [00:02<00:00,  6.73it/s] 95%|█████████▌| 20/21 [00:02<00:00,  6.73it/s]100%|██████████| 21/21 [00:03<00:00,  6.84it/s]100%|██████████| 21/21 [00:03<00:00,  6.88it/s]
-TRAIN-(text) (2/2/1)>> loss: 1.9214 
-text: >>  Has0_acc_2: 0.5701  Has0_F1_score: 0.4140  Non0_acc_2: 0.5516  Non0_F1_score: 0.3922  Mult_acc_5: 0.1931  Mult_acc_7: 0.1931  MAE: 1.3161  Corr: 0.0791 
-  0%|          | 0/4 [00:00<?, ?it/s]/home/stu/anaconda3/envs/MSA/lib/python3.9/site-packages/torch/nn/parallel/_functions.py:68: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
-  warnings.warn('Was asked to gather along dimension 0, but all '
- 50%|█████     | 2/4 [00:00<00:00, 12.61it/s]100%|██████████| 4/4 [00:00<00:00, 12.78it/s]100%|██████████| 4/4 [00:00<00:00, 12.75it/s]
-VAL-(text) >> loss: 2.7331 
-T: >>  Has0_acc_2: 0.7297  Has0_F1_score: 0.6157  Non0_acc_2: 0.7143  Non0_F1_score: 0.5952  Mult_acc_5: 0.1892  Mult_acc_7: 0.1892  MAE: 1.4429  Corr: -0.2661  Loss: 2.7331 
-TRAIN-(text) epoch(3)
-  0%|          | 0/21 [00:00<?, ?it/s]/home/stu/anaconda3/envs/MSA/lib/python3.9/site-packages/torch/nn/parallel/_functions.py:68: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
-  warnings.warn('Was asked to gather along dimension 0, but all '
- 10%|▉         | 2/21 [00:00<00:02,  8.55it/s] 14%|█▍        | 3/21 [00:00<00:02,  7.69it/s] 19%|█▉        | 4/21 [00:00<00:02,  7.31it/s] 24%|██▍       | 5/21 [00:00<00:02,  7.10it/s] 29%|██▊       | 6/21 [00:00<00:02,  6.97it/s] 33%|███▎      | 7/21 [00:00<00:02,  6.89it/s] 38%|███▊      | 8/21 [00:01<00:01,  6.85it/s] 43%|████▎     | 9/21 [00:01<00:01,  6.81it/s] 48%|████▊     | 10/21 [00:01<00:01,  6.78it/s] 52%|█████▏    | 11/21 [00:01<00:01,  6.77it/s] 57%|█████▋    | 12/21 [00:01<00:01,  6.76it/s] 62%|██████▏   | 13/21 [00:01<00:01,  6.75it/s] 67%|██████▋   | 14/21 [00:02<00:01,  6.75it/s] 71%|███████▏  | 15/21 [00:02<00:00,  6.74it/s] 76%|███████▌  | 16/21 [00:02<00:00,  6.74it/s] 81%|████████  | 17/21 [00:02<00:00,  6.74it/s] 86%|████████▌ | 18/21 [00:02<00:00,  6.74it/s] 90%|█████████ | 19/21 [00:02<00:00,  6.73it/s] 95%|█████████▌| 20/21 [00:02<00:00,  6.73it/s]100%|██████████| 21/21 [00:03<00:00,  6.85it/s]100%|██████████| 21/21 [00:03<00:00,  6.89it/s]
-TRAIN-(text) (3/3/1)>> loss: 1.6986 
-text: >>  Has0_acc_2: 0.5701  Has0_F1_score: 0.4140  Non0_acc_2: 0.5516  Non0_F1_score: 0.3922  Mult_acc_5: 0.1931  Mult_acc_7: 0.1931  MAE: 1.3145  Corr: 0.0933 
-  0%|          | 0/4 [00:00<?, ?it/s]/home/stu/anaconda3/envs/MSA/lib/python3.9/site-packages/torch/nn/parallel/_functions.py:68: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
-  warnings.warn('Was asked to gather along dimension 0, but all '
- 50%|█████     | 2/4 [00:00<00:00, 12.59it/s]100%|██████████| 4/4 [00:00<00:00, 12.78it/s]100%|██████████| 4/4 [00:00<00:00, 12.75it/s]
-VAL-(text) >> loss: 2.6831 
-T: >>  Has0_acc_2: 0.7027  Has0_F1_score: 0.5800  Non0_acc_2: 0.6857  Non0_F1_score: 0.5579  Mult_acc_5: 0.2703  Mult_acc_7: 0.2703  MAE: 1.3024  Corr: -0.0798  Loss: 2.6831 
-TRAIN-(text) epoch(4)
-model saved at:
-/mnt/disk1/wyx/MSA/Lab/ModalAdaptationMSA/results/models/1111/text-mosi-text-encoder.pth
-/mnt/disk1/wyx/MSA/Lab/ModalAdaptationMSA/results/models/1111/text-mosi-text-decoder.pth
-model saved at:
-/mnt/disk1/wyx/MSA/Lab/ModalAdaptationMSA/results/models/1111/text-mosi-text-encoder.pth
-/mnt/disk1/wyx/MSA/Lab/ModalAdaptationMSA/results/models/1111/text-mosi-text-decoder.pth
-  0%|          | 0/21 [00:00<?, ?it/s]/home/stu/anaconda3/envs/MSA/lib/python3.9/site-packages/torch/nn/parallel/_functions.py:68: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
-  warnings.warn('Was asked to gather along dimension 0, but all '
- 10%|▉         | 2/21 [00:00<00:02,  8.56it/s] 14%|█▍        | 3/21 [00:00<00:02,  7.69it/s] 19%|█▉        | 4/21 [00:00<00:02,  7.31it/s] 24%|██▍       | 5/21 [00:00<00:02,  7.10it/s] 29%|██▊       | 6/21 [00:00<00:02,  6.97it/s] 33%|███▎      | 7/21 [00:00<00:02,  6.89it/s] 38%|███▊      | 8/21 [00:01<00:01,  6.84it/s] 43%|████▎     | 9/21 [00:01<00:01,  6.81it/s] 48%|████▊     | 10/21 [00:01<00:01,  6.78it/s] 52%|█████▏    | 11/21 [00:01<00:01,  6.77it/s] 57%|█████▋    | 12/21 [00:01<00:01,  6.76it/s] 62%|██████▏   | 13/21 [00:01<00:01,  6.75it/s] 67%|██████▋   | 14/21 [00:02<00:01,  6.74it/s] 71%|███████▏  | 15/21 [00:02<00:00,  6.74it/s] 76%|███████▌  | 16/21 [00:02<00:00,  6.74it/s] 81%|████████  | 17/21 [00:02<00:00,  6.74it/s] 86%|████████▌ | 18/21 [00:02<00:00,  6.74it/s] 90%|█████████ | 19/21 [00:02<00:00,  6.73it/s] 95%|█████████▌| 20/21 [00:02<00:00,  6.73it/s]100%|██████████| 21/21 [00:03<00:00,  6.84it/s]100%|██████████| 21/21 [00:03<00:00,  6.89it/s]
-TRAIN-(text) (4/4/1)>> loss: 3.3083 
-text: >>  Has0_acc_2: 0.5701  Has0_F1_score: 0.4140  Non0_acc_2: 0.5516  Non0_F1_score: 0.3922  Mult_acc_5: 0.1931  Mult_acc_7: 0.1931  MAE: 1.3121  Corr: 0.1465 
-  0%|          | 0/4 [00:00<?, ?it/s]/home/stu/anaconda3/envs/MSA/lib/python3.9/site-packages/torch/nn/parallel/_functions.py:68: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
-  warnings.warn('Was asked to gather along dimension 0, but all '
- 50%|█████     | 2/4 [00:00<00:00, 12.57it/s]100%|██████████| 4/4 [00:00<00:00, 12.76it/s]100%|██████████| 4/4 [00:00<00:00, 12.73it/s]
-VAL-(text) >> loss: 2.7707 
-T: >>  Has0_acc_2: 0.5135  Has0_F1_score: 0.3485  Non0_acc_2: 0.4706  Non0_F1_score: 0.3012  Mult_acc_5: 0.2162  Mult_acc_7: 0.2162  MAE: 1.5107  Corr: -0.0866  Loss: 2.7707 
-TRAIN-(text) epoch(5)
-  0%|          | 0/21 [00:00<?, ?it/s]/home/stu/anaconda3/envs/MSA/lib/python3.9/site-packages/torch/nn/parallel/_functions.py:68: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
-  warnings.warn('Was asked to gather along dimension 0, but all '
- 10%|▉         | 2/21 [00:00<00:02,  8.56it/s] 14%|█▍        | 3/21 [00:00<00:02,  7.69it/s] 19%|█▉        | 4/21 [00:00<00:02,  7.31it/s] 24%|██▍       | 5/21 [00:00<00:02,  7.10it/s] 29%|██▊       | 6/21 [00:00<00:02,  6.97it/s] 33%|███▎      | 7/21 [00:00<00:02,  6.90it/s] 38%|███▊      | 8/21 [00:01<00:01,  6.84it/s] 43%|████▎     | 9/21 [00:01<00:01,  6.81it/s] 48%|████▊     | 10/21 [00:01<00:01,  6.79it/s] 52%|█████▏    | 11/21 [00:01<00:01,  6.77it/s] 57%|█████▋    | 12/21 [00:01<00:01,  6.76it/s] 62%|██████▏   | 13/21 [00:01<00:01,  6.76it/s] 67%|██████▋   | 14/21 [00:02<00:01,  6.75it/s] 71%|███████▏  | 15/21 [00:02<00:00,  6.74it/s] 76%|███████▌  | 16/21 [00:02<00:00,  6.74it/s] 81%|████████  | 17/21 [00:02<00:00,  6.74it/s] 86%|████████▌ | 18/21 [00:02<00:00,  6.73it/s] 90%|█████████ | 19/21 [00:02<00:00,  6.73it/s] 95%|█████████▌| 20/21 [00:02<00:00,  6.73it/s]100%|██████████| 21/21 [00:03<00:00,  6.84it/s]100%|██████████| 21/21 [00:03<00:00,  6.89it/s]
-TRAIN-(text) (5/5/1)>> loss: 1.2503 
-text: >>  Has0_acc_2: 0.5709  Has0_F1_score: 0.4158  Non0_acc_2: 0.5524  Non0_F1_score: 0.3940  Mult_acc_5: 0.1931  Mult_acc_7: 0.1931  MAE: 1.3116  Corr: 0.1077 
-  0%|          | 0/4 [00:00<?, ?it/s]/home/stu/anaconda3/envs/MSA/lib/python3.9/site-packages/torch/nn/parallel/_functions.py:68: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
-  warnings.warn('Was asked to gather along dimension 0, but all '
- 50%|█████     | 2/4 [00:00<00:00, 12.59it/s]100%|██████████| 4/4 [00:00<00:00, 12.79it/s]100%|██████████| 4/4 [00:00<00:00, 12.75it/s]
-VAL-(text) >> loss: 2.8082 
-T: >>  Has0_acc_2: 0.5405  Has0_F1_score: 0.3793  Non0_acc_2: 0.5143  Non0_F1_score: 0.3493  Mult_acc_5: 0.1351  Mult_acc_7: 0.1351  MAE: 1.7192  Corr: 0.0753  Loss: 2.8082 
-TRAIN-(text) epoch(6)
-  0%|          | 0/21 [00:00<?, ?it/s]/home/stu/anaconda3/envs/MSA/lib/python3.9/site-packages/torch/nn/parallel/_functions.py:68: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
-  warnings.warn('Was asked to gather along dimension 0, but all '
-  5%|▍         | 1/21 [00:00<00:04,  4.87it/s] 10%|▉         | 2/21 [00:00<00:03,  5.84it/s] 14%|█▍        | 3/21 [00:00<00:02,  6.22it/s] 19%|█▉        | 4/21 [00:00<00:02,  6.41it/s] 24%|██▍       | 5/21 [00:00<00:02,  6.48it/s] 29%|██▊       | 6/21 [00:00<00:02,  6.54it/s] 33%|███▎      | 7/21 [00:01<00:02,  6.60it/s] 38%|███▊      | 8/21 [00:01<00:01,  6.65it/s] 43%|████▎     | 9/21 [00:01<00:01,  6.64it/s] 48%|████▊     | 10/21 [00:01<00:01,  6.66it/s] 52%|█████▏    | 11/21 [00:01<00:01,  6.69it/s] 57%|█████▋    | 12/21 [00:01<00:01,  6.71it/s] 62%|██████▏   | 13/21 [00:01<00:01,  6.68it/s] 67%|██████▋   | 14/21 [00:02<00:01,  6.69it/s] 71%|███████▏  | 15/21 [00:02<00:00,  6.71it/s] 76%|███████▌  | 16/21 [00:02<00:00,  6.72it/s] 81%|████████  | 17/21 [00:02<00:00,  6.72it/s] 86%|████████▌ | 18/21 [00:02<00:00,  6.72it/s] 90%|█████████ | 19/21 [00:02<00:00,  6.73it/s] 95%|█████████▌| 20/21 [00:03<00:00,  6.73it/s]100%|██████████| 21/21 [00:03<00:00,  6.81it/s]100%|██████████| 21/21 [00:03<00:00,  6.61it/s]
-TRAIN-(text) (6/6/1)>> loss: 2.1309 
-text: >>  Has0_acc_2: 0.5701  Has0_F1_score: 0.4140  Non0_acc_2: 0.5516  Non0_F1_score: 0.3922  Mult_acc_5: 0.1924  Mult_acc_7: 0.1924  MAE: 1.3051  Corr: 0.2051 
-  0%|          | 0/4 [00:00<?, ?it/s]/home/stu/anaconda3/envs/MSA/lib/python3.9/site-packages/torch/nn/parallel/_functions.py:68: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
-  warnings.warn('Was asked to gather along dimension 0, but all '
- 50%|█████     | 2/4 [00:00<00:00, 12.55it/s]100%|██████████| 4/4 [00:00<00:00, 12.76it/s]100%|██████████| 4/4 [00:00<00:00, 12.72it/s]
-VAL-(text) >> loss: 2.6805 
-T: >>  Has0_acc_2: 0.5946  Has0_F1_score: 0.4691  Non0_acc_2: 0.5714  Non0_F1_score: 0.4430  Mult_acc_5: 0.1892  Mult_acc_7: 0.1892  MAE: 1.3885  Corr: 0.4991  Loss: 2.6805 
-TRAIN-(text) epoch(7)
-model saved at:
-/mnt/disk1/wyx/MSA/Lab/ModalAdaptationMSA/results/models/1111/text-mosi-text-encoder.pth
-/mnt/disk1/wyx/MSA/Lab/ModalAdaptationMSA/results/models/1111/text-mosi-text-decoder.pth
-  0%|          | 0/21 [00:00<?, ?it/s]/home/stu/anaconda3/envs/MSA/lib/python3.9/site-packages/torch/nn/parallel/_functions.py:68: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
-  warnings.warn('Was asked to gather along dimension 0, but all '
- 10%|▉         | 2/21 [00:00<00:02,  8.57it/s] 14%|█▍        | 3/21 [00:00<00:02,  7.66it/s] 19%|█▉        | 4/21 [00:00<00:02,  7.30it/s] 24%|██▍       | 5/21 [00:00<00:02,  7.09it/s] 29%|██▊       | 6/21 [00:00<00:02,  6.97it/s] 33%|███▎      | 7/21 [00:00<00:02,  6.88it/s] 38%|███▊      | 8/21 [00:01<00:01,  6.84it/s] 43%|████▎     | 9/21 [00:01<00:01,  6.81it/s] 48%|████▊     | 10/21 [00:01<00:01,  6.78it/s] 52%|█████▏    | 11/21 [00:01<00:01,  6.77it/s] 57%|█████▋    | 12/21 [00:01<00:01,  6.76it/s] 62%|██████▏   | 13/21 [00:01<00:01,  6.76it/s] 67%|██████▋   | 14/21 [00:02<00:01,  6.75it/s] 71%|███████▏  | 15/21 [00:02<00:00,  6.74it/s] 76%|███████▌  | 16/21 [00:02<00:00,  6.74it/s] 81%|████████  | 17/21 [00:02<00:00,  6.75it/s] 86%|████████▌ | 18/21 [00:02<00:00,  6.72it/s] 90%|█████████ | 19/21 [00:02<00:00,  6.72it/s] 95%|█████████▌| 20/21 [00:02<00:00,  6.72it/s]100%|██████████| 21/21 [00:03<00:00,  6.84it/s]100%|██████████| 21/21 [00:03<00:00,  6.89it/s]
-TRAIN-(text) (7/7/1)>> loss: 2.9190 
-text: >>  Has0_acc_2: 0.5911  Has0_F1_score: 0.5329  Non0_acc_2: 0.5792  Non0_F1_score: 0.5195  Mult_acc_5: 0.1924  Mult_acc_7: 0.1924  MAE: 1.3098  Corr: 0.1319 
-  0%|          | 0/4 [00:00<?, ?it/s]/home/stu/anaconda3/envs/MSA/lib/python3.9/site-packages/torch/nn/parallel/_functions.py:68: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
-  warnings.warn('Was asked to gather along dimension 0, but all '
- 50%|█████     | 2/4 [00:00<00:00, 12.49it/s]100%|██████████| 4/4 [00:00<00:00, 12.70it/s]100%|██████████| 4/4 [00:00<00:00, 12.66it/s]
-VAL-(text) >> loss: 2.6374 
-T: >>  Has0_acc_2: 0.6216  Has0_F1_score: 0.4766  Non0_acc_2: 0.6000  Non0_F1_score: 0.4500  Mult_acc_5: 0.2162  Mult_acc_7: 0.2162  MAE: 1.3149  Corr: 0.2410  Loss: 2.6374 
-TRAIN-(text) epoch(8)
-model saved at:
-/mnt/disk1/wyx/MSA/Lab/ModalAdaptationMSA/results/models/1111/text-mosi-text-encoder.pth
-/mnt/disk1/wyx/MSA/Lab/ModalAdaptationMSA/results/models/1111/text-mosi-text-decoder.pth
-  0%|          | 0/21 [00:00<?, ?it/s]/home/stu/anaconda3/envs/MSA/lib/python3.9/site-packages/torch/nn/parallel/_functions.py:68: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
-  warnings.warn('Was asked to gather along dimension 0, but all '
- 10%|▉         | 2/21 [00:00<00:02,  8.58it/s] 14%|█▍        | 3/21 [00:00<00:02,  7.71it/s] 19%|█▉        | 4/21 [00:00<00:02,  7.31it/s] 24%|██▍       | 5/21 [00:00<00:02,  7.11it/s] 29%|██▊       | 6/21 [00:00<00:02,  6.98it/s] 33%|███▎      | 7/21 [00:00<00:02,  6.90it/s] 38%|███▊      | 8/21 [00:01<00:01,  6.85it/s] 43%|████▎     | 9/21 [00:01<00:01,  6.81it/s] 48%|████▊     | 10/21 [00:01<00:01,  6.79it/s] 52%|█████▏    | 11/21 [00:01<00:01,  6.78it/s] 57%|█████▋    | 12/21 [00:01<00:01,  6.77it/s] 62%|██████▏   | 13/21 [00:01<00:01,  6.76it/s] 67%|██████▋   | 14/21 [00:02<00:01,  6.76it/s] 71%|███████▏  | 15/21 [00:02<00:00,  6.75it/s] 76%|███████▌  | 16/21 [00:02<00:00,  6.75it/s] 81%|████████  | 17/21 [00:02<00:00,  6.74it/s] 86%|████████▌ | 18/21 [00:02<00:00,  6.74it/s] 90%|█████████ | 19/21 [00:02<00:00,  6.73it/s] 95%|█████████▌| 20/21 [00:02<00:00,  6.73it/s]100%|██████████| 21/21 [00:03<00:00,  6.84it/s]100%|██████████| 21/21 [00:03<00:00,  6.90it/s]
-TRAIN-(text) (8/8/1)>> loss: 4.0742 
-text: >>  Has0_acc_2: 0.5763  Has0_F1_score: 0.4383  Non0_acc_2: 0.5581  Non0_F1_score: 0.4174  Mult_acc_5: 0.1947  Mult_acc_7: 0.1947  MAE: 1.2970  Corr: 0.2622 
-  0%|          | 0/4 [00:00<?, ?it/s]/home/stu/anaconda3/envs/MSA/lib/python3.9/site-packages/torch/nn/parallel/_functions.py:68: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
-  warnings.warn('Was asked to gather along dimension 0, but all '
- 50%|█████     | 2/4 [00:00<00:00, 12.58it/s]100%|██████████| 4/4 [00:00<00:00, 12.59it/s]100%|██████████| 4/4 [00:00<00:00, 12.58it/s]
-VAL-(text) >> loss: 2.6186 
-T: >>  Has0_acc_2: 0.6216  Has0_F1_score: 0.5720  Non0_acc_2: 0.6000  Non0_F1_score: 0.5508  Mult_acc_5: 0.2432  Mult_acc_7: 0.2432  MAE: 1.2722  Corr: 0.1935  Loss: 2.6186 
-TRAIN-(text) epoch(9)
-model saved at:
-/mnt/disk1/wyx/MSA/Lab/ModalAdaptationMSA/results/models/1111/text-mosi-text-encoder.pth
-/mnt/disk1/wyx/MSA/Lab/ModalAdaptationMSA/results/models/1111/text-mosi-text-decoder.pth
-model saved at:
-/mnt/disk1/wyx/MSA/Lab/ModalAdaptationMSA/results/models/1111/text-mosi-text-encoder.pth
-/mnt/disk1/wyx/MSA/Lab/ModalAdaptationMSA/results/models/1111/text-mosi-text-decoder.pth
-  0%|          | 0/21 [00:00<?, ?it/s]/home/stu/anaconda3/envs/MSA/lib/python3.9/site-packages/torch/nn/parallel/_functions.py:68: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
-  warnings.warn('Was asked to gather along dimension 0, but all '
- 10%|▉         | 2/21 [00:00<00:02,  8.58it/s] 14%|█▍        | 3/21 [00:00<00:02,  7.71it/s] 19%|█▉        | 4/21 [00:00<00:02,  7.32it/s] 24%|██▍       | 5/21 [00:00<00:02,  7.10it/s] 29%|██▊       | 6/21 [00:00<00:02,  6.97it/s] 33%|███▎      | 7/21 [00:00<00:02,  6.89it/s] 38%|███▊      | 8/21 [00:01<00:01,  6.84it/s] 43%|████▎     | 9/21 [00:01<00:01,  6.81it/s] 48%|████▊     | 10/21 [00:01<00:01,  6.79it/s] 52%|█████▏    | 11/21 [00:01<00:01,  6.77it/s] 57%|█████▋    | 12/21 [00:01<00:01,  6.76it/s] 62%|██████▏   | 13/21 [00:01<00:01,  6.75it/s] 67%|██████▋   | 14/21 [00:02<00:01,  6.75it/s] 71%|███████▏  | 15/21 [00:02<00:00,  6.74it/s] 76%|███████▌  | 16/21 [00:02<00:00,  6.74it/s] 81%|████████  | 17/21 [00:02<00:00,  6.74it/s] 86%|████████▌ | 18/21 [00:02<00:00,  6.74it/s] 90%|█████████ | 19/21 [00:02<00:00,  6.74it/s] 95%|█████████▌| 20/21 [00:02<00:00,  6.73it/s]100%|██████████| 21/21 [00:03<00:00,  6.84it/s]100%|██████████| 21/21 [00:03<00:00,  6.89it/s]
-TRAIN-(text) (9/9/1)>> loss: 0.7886 
-text: >>  Has0_acc_2: 0.5935  Has0_F1_score: 0.5201  Non0_acc_2: 0.5816  Non0_F1_score: 0.5062  Mult_acc_5: 0.1986  Mult_acc_7: 0.1986  MAE: 1.2913  Corr: 0.1983 
-  0%|          | 0/4 [00:00<?, ?it/s]/home/stu/anaconda3/envs/MSA/lib/python3.9/site-packages/torch/nn/parallel/_functions.py:68: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
-  warnings.warn('Was asked to gather along dimension 0, but all '
- 50%|█████     | 2/4 [00:00<00:00, 12.59it/s]100%|██████████| 4/4 [00:00<00:00, 12.76it/s]100%|██████████| 4/4 [00:00<00:00, 12.72it/s]
-VAL-(text) >> loss: 2.5356 
-T: >>  Has0_acc_2: 0.5946  Has0_F1_score: 0.5414  Non0_acc_2: 0.5833  Non0_F1_score: 0.5305  Mult_acc_5: 0.2973  Mult_acc_7: 0.2973  MAE: 1.2135  Corr: 0.2088  Loss: 2.5356 
-TRAIN-(text) epoch(10)
-model saved at:
-/mnt/disk1/wyx/MSA/Lab/ModalAdaptationMSA/results/models/1111/text-mosi-text-encoder.pth
-/mnt/disk1/wyx/MSA/Lab/ModalAdaptationMSA/results/models/1111/text-mosi-text-decoder.pth
-model saved at:
-/mnt/disk1/wyx/MSA/Lab/ModalAdaptationMSA/results/models/1111/text-mosi-text-encoder.pth
-/mnt/disk1/wyx/MSA/Lab/ModalAdaptationMSA/results/models/1111/text-mosi-text-decoder.pth
-  0%|          | 0/21 [00:00<?, ?it/s]/home/stu/anaconda3/envs/MSA/lib/python3.9/site-packages/torch/nn/parallel/_functions.py:68: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
-  warnings.warn('Was asked to gather along dimension 0, but all '
- 10%|▉         | 2/21 [00:00<00:02,  8.57it/s] 14%|█▍        | 3/21 [00:00<00:02,  7.70it/s] 19%|█▉        | 4/21 [00:00<00:02,  7.31it/s] 24%|██▍       | 5/21 [00:00<00:02,  7.11it/s] 29%|██▊       | 6/21 [00:00<00:02,  6.98it/s] 33%|███▎      | 7/21 [00:00<00:02,  6.90it/s] 38%|███▊      | 8/21 [00:01<00:01,  6.85it/s] 43%|████▎     | 9/21 [00:01<00:01,  6.82it/s] 48%|████▊     | 10/21 [00:01<00:01,  6.79it/s] 52%|█████▏    | 11/21 [00:01<00:01,  6.78it/s] 57%|█████▋    | 12/21 [00:01<00:01,  6.76it/s] 62%|██████▏   | 13/21 [00:01<00:01,  6.76it/s] 67%|██████▋   | 14/21 [00:02<00:01,  6.76it/s] 71%|███████▏  | 15/21 [00:02<00:00,  6.75it/s] 76%|███████▌  | 16/21 [00:02<00:00,  6.75it/s] 81%|████████  | 17/21 [00:02<00:00,  6.75it/s] 86%|████████▌ | 18/21 [00:02<00:00,  6.74it/s] 90%|█████████ | 19/21 [00:02<00:00,  6.75it/s] 95%|█████████▌| 20/21 [00:02<00:00,  6.74it/s]100%|██████████| 21/21 [00:03<00:00,  6.85it/s]100%|██████████| 21/21 [00:03<00:00,  6.90it/s]
-TRAIN-(text) (10/10/1)>> loss: 0.7445 
-text: >>  Has0_acc_2: 0.6340  Has0_F1_score: 0.5854  Non0_acc_2: 0.6263  Non0_F1_score: 0.5762  Mult_acc_5: 0.1986  Mult_acc_7: 0.1986  MAE: 1.2581  Corr: 0.3505 
-  0%|          | 0/4 [00:00<?, ?it/s]/home/stu/anaconda3/envs/MSA/lib/python3.9/site-packages/torch/nn/parallel/_functions.py:68: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
-  warnings.warn('Was asked to gather along dimension 0, but all '
- 50%|█████     | 2/4 [00:00<00:00, 12.61it/s]100%|██████████| 4/4 [00:00<00:00, 12.80it/s]100%|██████████| 4/4 [00:00<00:00, 12.76it/s]
-VAL-(text) >> loss: 2.4831 
-T: >>  Has0_acc_2: 0.7838  Has0_F1_score: 0.7593  Non0_acc_2: 0.7714  Non0_F1_score: 0.7465  Mult_acc_5: 0.1622  Mult_acc_7: 0.1622  MAE: 1.4184  Corr: 0.4264  Loss: 2.4831 
-TRAIN-(text) epoch(11)
-model saved at:
-/mnt/disk1/wyx/MSA/Lab/ModalAdaptationMSA/results/models/1111/text-mosi-text-encoder.pth
-/mnt/disk1/wyx/MSA/Lab/ModalAdaptationMSA/results/models/1111/text-mosi-text-decoder.pth
-  0%|          | 0/21 [00:00<?, ?it/s]/home/stu/anaconda3/envs/MSA/lib/python3.9/site-packages/torch/nn/parallel/_functions.py:68: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
-  warnings.warn('Was asked to gather along dimension 0, but all '
- 10%|▉         | 2/21 [00:00<00:02,  8.08it/s] 14%|█▍        | 3/21 [00:00<00:02,  7.43it/s] 19%|█▉        | 4/21 [00:00<00:02,  7.14it/s] 24%|██▍       | 5/21 [00:00<00:02,  6.99it/s] 29%|██▊       | 6/21 [00:00<00:02,  6.90it/s] 33%|███▎      | 7/21 [00:00<00:02,  6.85it/s] 38%|███▊      | 8/21 [00:01<00:01,  6.81it/s] 43%|████▎     | 9/21 [00:01<00:01,  6.79it/s] 48%|████▊     | 10/21 [00:01<00:01,  6.76it/s] 52%|█████▏    | 11/21 [00:01<00:01,  6.73it/s] 57%|█████▋    | 12/21 [00:01<00:01,  6.73it/s] 62%|██████▏   | 13/21 [00:01<00:01,  6.73it/s] 67%|██████▋   | 14/21 [00:02<00:01,  6.68it/s] 71%|███████▏  | 15/21 [00:02<00:00,  6.69it/s] 76%|███████▌  | 16/21 [00:02<00:00,  6.71it/s] 81%|████████  | 17/21 [00:02<00:00,  6.71it/s] 86%|████████▌ | 18/21 [00:02<00:00,  6.72it/s] 90%|█████████ | 19/21 [00:02<00:00,  6.72it/s] 95%|█████████▌| 20/21 [00:02<00:00,  6.73it/s]100%|██████████| 21/21 [00:03<00:00,  6.83it/s]100%|██████████| 21/21 [00:03<00:00,  6.84it/s]
-TRAIN-(text) (11/11/1)>> loss: 3.1613 
-text: >>  Has0_acc_2: 0.6246  Has0_F1_score: 0.6083  Non0_acc_2: 0.6223  Non0_F1_score: 0.6049  Mult_acc_5: 0.2056  Mult_acc_7: 0.2056  MAE: 1.2216  Corr: 0.3223 
-  0%|          | 0/4 [00:00<?, ?it/s]/home/stu/anaconda3/envs/MSA/lib/python3.9/site-packages/torch/nn/parallel/_functions.py:68: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
-  warnings.warn('Was asked to gather along dimension 0, but all '
- 50%|█████     | 2/4 [00:00<00:00, 12.64it/s]100%|██████████| 4/4 [00:00<00:00, 12.81it/s]100%|██████████| 4/4 [00:00<00:00, 12.77it/s]
-VAL-(text) >> loss: 2.3592 
-T: >>  Has0_acc_2: 0.7568  Has0_F1_score: 0.7513  Non0_acc_2: 0.7500  Non0_F1_score: 0.7451  Mult_acc_5: 0.1351  Mult_acc_7: 0.1351  MAE: 1.3585  Corr: 0.5595  Loss: 2.3592 
-TRAIN-(text) epoch(12)
-model saved at:
-/mnt/disk1/wyx/MSA/Lab/ModalAdaptationMSA/results/models/1111/text-mosi-text-encoder.pth
-/mnt/disk1/wyx/MSA/Lab/ModalAdaptationMSA/results/models/1111/text-mosi-text-decoder.pth
-  0%|          | 0/21 [00:00<?, ?it/s]/home/stu/anaconda3/envs/MSA/lib/python3.9/site-packages/torch/nn/parallel/_functions.py:68: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
-  warnings.warn('Was asked to gather along dimension 0, but all '
- 10%|▉         | 2/21 [00:00<00:02,  8.55it/s] 14%|█▍        | 3/21 [00:00<00:02,  7.64it/s] 19%|█▉        | 4/21 [00:00<00:02,  7.27it/s] 24%|██▍       | 5/21 [00:00<00:02,  7.06it/s] 29%|██▊       | 6/21 [00:00<00:02,  6.89it/s] 33%|███▎      | 7/21 [00:00<00:02,  6.84it/s] 38%|███▊      | 8/21 [00:01<00:01,  6.80it/s] 43%|████▎     | 9/21 [00:01<00:01,  6.78it/s] 48%|████▊     | 10/21 [00:01<00:01,  6.77it/s] 52%|█████▏    | 11/21 [00:01<00:01,  6.76it/s] 57%|█████▋    | 12/21 [00:01<00:01,  6.75it/s] 62%|██████▏   | 13/21 [00:01<00:01,  6.74it/s] 67%|██████▋   | 14/21 [00:02<00:01,  6.74it/s] 71%|███████▏  | 15/21 [00:02<00:00,  6.74it/s] 76%|███████▌  | 16/21 [00:02<00:00,  6.74it/s] 81%|████████  | 17/21 [00:02<00:00,  6.73it/s] 86%|████████▌ | 18/21 [00:02<00:00,  6.73it/s] 90%|█████████ | 19/21 [00:02<00:00,  6.73it/s] 95%|█████████▌| 20/21 [00:02<00:00,  6.73it/s]100%|██████████| 21/21 [00:03<00:00,  6.84it/s]100%|██████████| 21/21 [00:03<00:00,  6.87it/s]
-TRAIN-(text) (12/12/1)>> loss: 1.9601 
-text: >>  Has0_acc_2: 0.6425  Has0_F1_score: 0.6196  Non0_acc_2: 0.6401  Non0_F1_score: 0.6160  Mult_acc_5: 0.2142  Mult_acc_7: 0.2142  MAE: 1.1957  Corr: 0.3771 
-  0%|          | 0/4 [00:00<?, ?it/s]/home/stu/anaconda3/envs/MSA/lib/python3.9/site-packages/torch/nn/parallel/_functions.py:68: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
-  warnings.warn('Was asked to gather along dimension 0, but all '
- 50%|█████     | 2/4 [00:00<00:00, 12.63it/s]100%|██████████| 4/4 [00:00<00:00, 12.80it/s]100%|██████████| 4/4 [00:00<00:00, 12.77it/s]
-VAL-(text) >> loss: 2.1778 
-T: >>  Has0_acc_2: 0.8108  Has0_F1_score: 0.8135  Non0_acc_2: 0.8286  Non0_F1_score: 0.8286  Mult_acc_5: 0.2162  Mult_acc_7: 0.2162  MAE: 1.1252  Corr: 0.5258  Loss: 2.1778 
-TRAIN-(text) epoch(13)
-model saved at:
-/mnt/disk1/wyx/MSA/Lab/ModalAdaptationMSA/results/models/1111/text-mosi-text-encoder.pth
-/mnt/disk1/wyx/MSA/Lab/ModalAdaptationMSA/results/models/1111/text-mosi-text-decoder.pth
-model saved at:
-/mnt/disk1/wyx/MSA/Lab/ModalAdaptationMSA/results/models/1111/text-mosi-text-encoder.pth
-/mnt/disk1/wyx/MSA/Lab/ModalAdaptationMSA/results/models/1111/text-mosi-text-decoder.pth
-  0%|          | 0/21 [00:00<?, ?it/s]/home/stu/anaconda3/envs/MSA/lib/python3.9/site-packages/torch/nn/parallel/_functions.py:68: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
-  warnings.warn('Was asked to gather along dimension 0, but all '
- 10%|▉         | 2/21 [00:00<00:02,  8.54it/s] 14%|█▍        | 3/21 [00:00<00:02,  7.69it/s] 19%|█▉        | 4/21 [00:00<00:02,  7.30it/s] 24%|██▍       | 5/21 [00:00<00:02,  7.09it/s] 29%|██▊       | 6/21 [00:00<00:02,  6.97it/s] 33%|███▎      | 7/21 [00:00<00:02,  6.90it/s] 38%|███▊      | 8/21 [00:01<00:01,  6.85it/s] 43%|████▎     | 9/21 [00:01<00:01,  6.81it/s] 48%|████▊     | 10/21 [00:01<00:01,  6.79it/s] 52%|█████▏    | 11/21 [00:01<00:01,  6.77it/s] 57%|█████▋    | 12/21 [00:01<00:01,  6.76it/s] 62%|██████▏   | 13/21 [00:01<00:01,  6.76it/s] 67%|██████▋   | 14/21 [00:02<00:01,  6.75it/s] 71%|███████▏  | 15/21 [00:02<00:00,  6.75it/s] 76%|███████▌  | 16/21 [00:02<00:00,  6.75it/s] 81%|████████  | 17/21 [00:02<00:00,  6.75it/s] 86%|████████▌ | 18/21 [00:02<00:00,  6.74it/s] 90%|█████████ | 19/21 [00:02<00:00,  6.74it/s] 95%|█████████▌| 20/21 [00:02<00:00,  6.74it/s]100%|██████████| 21/21 [00:03<00:00,  6.85it/s]100%|██████████| 21/21 [00:03<00:00,  6.89it/s]
-TRAIN-(text) (13/13/1)>> loss: 0.9238 
-text: >>  Has0_acc_2: 0.6581  Has0_F1_score: 0.6477  Non0_acc_2: 0.6604  Non0_F1_score: 0.6489  Mult_acc_5: 0.2344  Mult_acc_7: 0.2329  MAE: 1.1611  Corr: 0.4247 
-  0%|          | 0/4 [00:00<?, ?it/s]/home/stu/anaconda3/envs/MSA/lib/python3.9/site-packages/torch/nn/parallel/_functions.py:68: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
-  warnings.warn('Was asked to gather along dimension 0, but all '
- 50%|█████     | 2/4 [00:00<00:00, 12.63it/s]100%|██████████| 4/4 [00:00<00:00, 12.80it/s]100%|██████████| 4/4 [00:00<00:00, 12.76it/s]
-VAL-(text) >> loss: 2.1549 
-T: >>  Has0_acc_2: 0.7568  Has0_F1_score: 0.7401  Non0_acc_2: 0.7500  Non0_F1_score: 0.7336  Mult_acc_5: 0.3514  Mult_acc_7: 0.2973  MAE: 1.2189  Corr: 0.5314  Loss: 2.1549 
-TRAIN-(text) epoch(14)
-model saved at:
-/mnt/disk1/wyx/MSA/Lab/ModalAdaptationMSA/results/models/1111/text-mosi-text-encoder.pth
-/mnt/disk1/wyx/MSA/Lab/ModalAdaptationMSA/results/models/1111/text-mosi-text-decoder.pth
-  0%|          | 0/21 [00:00<?, ?it/s]/home/stu/anaconda3/envs/MSA/lib/python3.9/site-packages/torch/nn/parallel/_functions.py:68: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
-  warnings.warn('Was asked to gather along dimension 0, but all '
- 10%|▉         | 2/21 [00:00<00:02,  8.56it/s] 14%|█▍        | 3/21 [00:00<00:02,  7.70it/s] 19%|█▉        | 4/21 [00:00<00:02,  7.31it/s] 24%|██▍       | 5/21 [00:00<00:02,  7.09it/s] 29%|██▊       | 6/21 [00:00<00:02,  6.98it/s] 33%|███▎      | 7/21 [00:00<00:02,  6.89it/s] 38%|███▊      | 8/21 [00:01<00:01,  6.84it/s] 43%|████▎     | 9/21 [00:01<00:01,  6.81it/s] 48%|████▊     | 10/21 [00:01<00:01,  6.78it/s] 52%|█████▏    | 11/21 [00:01<00:01,  6.77it/s] 57%|█████▋    | 12/21 [00:01<00:01,  6.76it/s] 62%|██████▏   | 13/21 [00:01<00:01,  6.70it/s] 67%|██████▋   | 14/21 [00:02<00:01,  6.71it/s] 71%|███████▏  | 15/21 [00:02<00:00,  6.71it/s] 76%|███████▌  | 16/21 [00:02<00:00,  6.72it/s] 81%|████████  | 17/21 [00:02<00:00,  6.73it/s] 86%|████████▌ | 18/21 [00:02<00:00,  6.73it/s] 90%|█████████ | 19/21 [00:02<00:00,  6.73it/s] 95%|█████████▌| 20/21 [00:02<00:00,  6.73it/s]100%|██████████| 21/21 [00:03<00:00,  6.84it/s]100%|██████████| 21/21 [00:03<00:00,  6.88it/s]
-TRAIN-(text) (14/14/1)>> loss: 0.8418 
-text: >>  Has0_acc_2: 0.6698  Has0_F1_score: 0.6606  Non0_acc_2: 0.6669  Non0_F1_score: 0.6573  Mult_acc_5: 0.2430  Mult_acc_7: 0.2399  MAE: 1.1241  Corr: 0.4540 
-  0%|          | 0/4 [00:00<?, ?it/s]/home/stu/anaconda3/envs/MSA/lib/python3.9/site-packages/torch/nn/parallel/_functions.py:68: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
-  warnings.warn('Was asked to gather along dimension 0, but all '
- 50%|█████     | 2/4 [00:00<00:00, 12.55it/s]100%|██████████| 4/4 [00:00<00:00, 12.64it/s]100%|██████████| 4/4 [00:00<00:00, 12.62it/s]
-VAL-(text) >> loss: 2.3720 
-T: >>  Has0_acc_2: 0.7027  Has0_F1_score: 0.6707  Non0_acc_2: 0.6857  Non0_F1_score: 0.6550  Mult_acc_5: 0.2432  Mult_acc_7: 0.2162  MAE: 1.3505  Corr: 0.4710  Loss: 2.3720 
-TRAIN-(text) epoch(15)
-  0%|          | 0/21 [00:00<?, ?it/s]/home/stu/anaconda3/envs/MSA/lib/python3.9/site-packages/torch/nn/parallel/_functions.py:68: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
-  warnings.warn('Was asked to gather along dimension 0, but all '
- 10%|▉         | 2/21 [00:00<00:02,  8.54it/s] 14%|█▍        | 3/21 [00:00<00:02,  7.68it/s] 19%|█▉        | 4/21 [00:00<00:02,  7.30it/s] 24%|██▍       | 5/21 [00:00<00:02,  7.09it/s] 29%|██▊       | 6/21 [00:00<00:02,  6.97it/s] 33%|███▎      | 7/21 [00:00<00:02,  6.88it/s] 38%|███▊      | 8/21 [00:01<00:01,  6.83it/s] 43%|████▎     | 9/21 [00:01<00:01,  6.80it/s] 48%|████▊     | 10/21 [00:01<00:01,  6.78it/s] 52%|█████▏    | 11/21 [00:01<00:01,  6.77it/s] 57%|█████▋    | 12/21 [00:01<00:01,  6.76it/s] 62%|██████▏   | 13/21 [00:01<00:01,  6.75it/s] 67%|██████▋   | 14/21 [00:02<00:01,  6.75it/s] 71%|███████▏  | 15/21 [00:02<00:00,  6.74it/s] 76%|███████▌  | 16/21 [00:02<00:00,  6.74it/s] 81%|████████  | 17/21 [00:02<00:00,  6.74it/s] 86%|████████▌ | 18/21 [00:02<00:00,  6.74it/s] 90%|█████████ | 19/21 [00:02<00:00,  6.73it/s] 95%|█████████▌| 20/21 [00:02<00:00,  6.74it/s]100%|██████████| 21/21 [00:03<00:00,  6.85it/s]100%|██████████| 21/21 [00:03<00:00,  6.89it/s]
-TRAIN-(text) (15/15/1)>> loss: 2.4103 
-text: >>  Has0_acc_2: 0.6745  Has0_F1_score: 0.6675  Non0_acc_2: 0.6816  Non0_F1_score: 0.6733  Mult_acc_5: 0.2336  Mult_acc_7: 0.2266  MAE: 1.1254  Corr: 0.4580 
-  0%|          | 0/4 [00:00<?, ?it/s]/home/stu/anaconda3/envs/MSA/lib/python3.9/site-packages/torch/nn/parallel/_functions.py:68: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
-  warnings.warn('Was asked to gather along dimension 0, but all '
- 50%|█████     | 2/4 [00:00<00:00, 12.61it/s]100%|██████████| 4/4 [00:00<00:00, 12.79it/s]100%|██████████| 4/4 [00:00<00:00, 12.76it/s]
-VAL-(text) >> loss: 2.0214 
-T: >>  Has0_acc_2: 0.7027  Has0_F1_score: 0.6823  Non0_acc_2: 0.7027  Non0_F1_score: 0.6823  Mult_acc_5: 0.1892  Mult_acc_7: 0.1892  MAE: 1.0443  Corr: 0.5047  Loss: 2.0214 
-TRAIN-(text) epoch(16)
-model saved at:
-/mnt/disk1/wyx/MSA/Lab/ModalAdaptationMSA/results/models/1111/text-mosi-text-encoder.pth
-/mnt/disk1/wyx/MSA/Lab/ModalAdaptationMSA/results/models/1111/text-mosi-text-decoder.pth
-model saved at:
-/mnt/disk1/wyx/MSA/Lab/ModalAdaptationMSA/results/models/1111/text-mosi-text-encoder.pth
-/mnt/disk1/wyx/MSA/Lab/ModalAdaptationMSA/results/models/1111/text-mosi-text-decoder.pth
-  0%|          | 0/21 [00:00<?, ?it/s]/home/stu/anaconda3/envs/MSA/lib/python3.9/site-packages/torch/nn/parallel/_functions.py:68: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
-  warnings.warn('Was asked to gather along dimension 0, but all '
- 10%|▉         | 2/21 [00:00<00:02,  8.53it/s] 14%|█▍        | 3/21 [00:00<00:02,  7.67it/s] 19%|█▉        | 4/21 [00:00<00:02,  7.29it/s] 24%|██▍       | 5/21 [00:00<00:02,  7.09it/s] 29%|██▊       | 6/21 [00:00<00:02,  6.97it/s] 33%|███▎      | 7/21 [00:00<00:02,  6.89it/s] 38%|███▊      | 8/21 [00:01<00:01,  6.84it/s] 43%|████▎     | 9/21 [00:01<00:01,  6.81it/s] 48%|████▊     | 10/21 [00:01<00:01,  6.79it/s] 52%|█████▏    | 11/21 [00:01<00:01,  6.77it/s] 57%|█████▋    | 12/21 [00:01<00:01,  6.76it/s] 62%|██████▏   | 13/21 [00:01<00:01,  6.76it/s] 67%|██████▋   | 14/21 [00:02<00:01,  6.74it/s] 71%|███████▏  | 15/21 [00:02<00:00,  6.74it/s] 76%|███████▌  | 16/21 [00:02<00:00,  6.73it/s] 81%|████████  | 17/21 [00:02<00:00,  6.73it/s] 86%|████████▌ | 18/21 [00:02<00:00,  6.74it/s] 90%|█████████ | 19/21 [00:02<00:00,  6.71it/s] 95%|█████████▌| 20/21 [00:02<00:00,  6.72it/s]100%|██████████| 21/21 [00:03<00:00,  6.83it/s]100%|██████████| 21/21 [00:03<00:00,  6.88it/s]
-TRAIN-(text) (16/16/1)>> loss: 0.5673 
-text: >>  Has0_acc_2: 0.6815  Has0_F1_score: 0.6778  Non0_acc_2: 0.6848  Non0_F1_score: 0.6803  Mult_acc_5: 0.2547  Mult_acc_7: 0.2500  MAE: 1.1127  Corr: 0.4721 
-  0%|          | 0/4 [00:00<?, ?it/s]/home/stu/anaconda3/envs/MSA/lib/python3.9/site-packages/torch/nn/parallel/_functions.py:68: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
-  warnings.warn('Was asked to gather along dimension 0, but all '
- 50%|█████     | 2/4 [00:00<00:00, 12.60it/s]100%|██████████| 4/4 [00:00<00:00, 12.78it/s]100%|██████████| 4/4 [00:00<00:00, 12.75it/s]
-VAL-(text) >> loss: 2.0549 
-T: >>  Has0_acc_2: 0.7838  Has0_F1_score: 0.7847  Non0_acc_2: 0.7778  Non0_F1_score: 0.7785  Mult_acc_5: 0.1622  Mult_acc_7: 0.1622  MAE: 1.1939  Corr: 0.5326  Loss: 2.0549 
-TRAIN-(text) epoch(17)
-  0%|          | 0/21 [00:00<?, ?it/s]/home/stu/anaconda3/envs/MSA/lib/python3.9/site-packages/torch/nn/parallel/_functions.py:68: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
-  warnings.warn('Was asked to gather along dimension 0, but all '
- 10%|▉         | 2/21 [00:00<00:02,  8.56it/s] 14%|█▍        | 3/21 [00:00<00:02,  7.69it/s] 19%|█▉        | 4/21 [00:00<00:02,  7.30it/s] 24%|██▍       | 5/21 [00:00<00:02,  7.10it/s] 29%|██▊       | 6/21 [00:00<00:02,  6.96it/s]

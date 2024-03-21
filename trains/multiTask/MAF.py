@@ -485,3 +485,6 @@ class MAF():
         update_single_label(f_text, mode='text')
         update_single_label(f_audio, mode='audio')
         update_single_label(f_vision, mode='vision')
+
+
+        

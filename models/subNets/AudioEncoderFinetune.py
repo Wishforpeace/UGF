@@ -78,7 +78,7 @@ class AudioEncoderPretrain(nn.Module):
        
     def save_model(self):
         # save all modules
-        path = self.args.model_save_path + f'{self.args.modelName}-{self.args.datasetName}-audio'
+        path = self.args.model_save_path + f'{self.args.datasetName}-audio'
         encoder_path = path + '-encoder.pth'
         decoder_path = path + '-decoder.pth'
         torch.save(self.encoder.state_dict(), encoder_path)
@@ -88,7 +88,7 @@ class AudioEncoderPretrain(nn.Module):
         print(decoder_path)
 
     def load_model(self, module=None):
-        path = self.args.model_save_path + f'{self.args.modelName}-{self.args.datasetName}-audio'
+        path = self.args.model_save_path + f'{self.args.datasetName}-audio'
         encoder_path =  path + '-encoder.pth'
         decoder_path =  path+ '-decoder.pth'
 
