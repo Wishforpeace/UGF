@@ -29,12 +29,13 @@ class Text():
         self.epochs = self.args.text_epochs
         self.metrics = MetricsTop(args.train_mode).getMetics(args.datasetName)
 
-    def do_train(self,model,dataloader):
-        check = {'Loss': 10000, 'MAE': 100}
+    def do_train(self,model,dataloader,check):
+        
         if self.args.parallel:
             optimizer =  optim.Adam(model.module.Model.parameters(),lr=self.args.learning_rate,weight_decay=self.args.weight_decay)
         else:
             optimizer =  optim.Adam(model.Model.parameters(),lr=self.args.learning_rate)
+        # optimizer,scheduler = build_optimizer(args=self.args,optimizer_grouped_parameters=model.parameters(),epochs=self.epochs)
 
         epoch, best_epoch = 0, 0
 
@@ -68,6 +69,7 @@ class Text():
                     y_pred.append(pred.cpu())
                     loss.backward()
                     optimizer.step()
+                    # scheduler.step()
 
                 train_loss += loss.item()
 

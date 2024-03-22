@@ -64,6 +64,8 @@ class MAF():
             'audio': torch.tensor(args.post_audio_dim).float(),
             'vision': torch.tensor(args.post_video_dim).float(),
         }
+
+
         # new labels
         self.label_map = {
             'fusion': torch.zeros(args.train_samples, requires_grad=False).to(args.device),
@@ -78,13 +80,6 @@ class MAF():
             'A': 'audio',
             'V': 'vision'
         }
-
-        self.weight_map = {
-            'T': 't_attention_constant',
-            'A': 'a_attention_constant',
-            'V': 'v_attention_constant'
-        }
-
 
 
     def do_train(self, model, dataloader):
@@ -199,12 +194,12 @@ class MAF():
                     f_vision = outputs['Feature_v'].detach()
 
                     # 造伪标签
-                    if self.args.is_ulgm:
-                        if epoch > 1:
-                            self.update_labels(f_fusion, f_text, f_audio, f_vision, epoch, indexes, outputs)
+                    # if self.args.is_ulgm:
+                    #     if epoch > 1:
+                    #         self.update_labels(f_fusion, f_text, f_audio, f_vision, epoch, indexes, outputs)
                         
-                        self.update_features(f_fusion, f_text, f_audio, f_vision, indexes)
-                        self.update_centers()
+                    #     self.update_features(f_fusion, f_text, f_audio, f_vision, indexes)
+                    #     self.update_centers()
 
 
                     # # store results
@@ -234,6 +229,8 @@ class MAF():
                         coeff_t = math.exp(self.args.alpha*(optimal_ratio_t - ratio_t))
                         coeff_a = math.exp(self.args.alpha*(optimal_ratio_a - ratio_a))
                         coeff_v = math.exp(self.args.alpha*(optimal_ratio_v - ratio_v))
+
+
 
                     # compute loss
                     loss = 0.0

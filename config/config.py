@@ -11,6 +11,7 @@ class ConfigPretrain():
             'text':self.__MAF,
             'vision':self.__MAF,
             'audio':self.__MAF,
+            'fusion':self.__MAF,
 
         }
         # hyper parameters for datasets
@@ -126,9 +127,11 @@ class ConfigPretrain():
                 'mosi':{
                     # the batch_size of each epoch is update_epochs * batch_size
                     'batch_size': 64,
-                    'text_epochs':150,
+                    'text_epochs':100,
                     'vision_epochs':100,
                     'audio_epochs':100,
+                    'fusion_epochs':100,
+                    'finetune_epochs':50,
                     'encoder_fea_dim':768,
                     'text_out': 768, 
                     'audio_out': 16,
@@ -152,12 +155,22 @@ class ConfigPretrain():
                     'H': 3.0
                 },
                 'mosei':{
-                    # the batch_size of each epoch is update_epochs * batch_size
                     'batch_size': 64,
-                    'epochs':100,
+                    'text_epochs':100,
+                    'vision_epochs':100,
+                    'audio_epochs':100,
+                    'fusion_epochs':100,
+                    'finetune_epochs':50,
+                    'encoder_fea_dim':768,
                     'text_out': 768, 
                     'audio_out': 16,
                     'vision_out': 32, 
+                    'vision_nhead':8,
+                    'vision_tf_num_layers': 2,
+                    'audio_out': 32, 
+                    'audio_nhead':8,
+                    'audio_tf_num_layers': 2,
+                    'proj_fea_dim':768,
                     # post feature
                     'post_fusion_dim': 128,
                     'post_text_dim':128,

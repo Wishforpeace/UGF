@@ -19,6 +19,7 @@ class ATIO():
            'text':TextTrain.Text,
            'vision':VisionTrain.Vision,
            'audio':AudioTrain.Audio,
+           'fusion':TVA_Fusion.TVA_Fusion,
         }
     
     def getTrain(self, args):

@@ -3,8 +3,10 @@ import torch.nn as nn
 import torch.nn.functional as F
 from models.subNets.BaseClassifier import BaseClassifier
 from models.subNets.TfEncoder import  TfEncoder
-from models.multiTask.MAF import MultiheadSelfAttentionWithPooling
+
 import sys
+
+from models.subNets.pooling import MultiheadSelfAttentionWithPooling
 
 class VisionEncoder(nn.Module):
     def __init__(self,args,fea_size=None, encoder_fea_dim=None, nhead=None, dim_feedforward=None,
@@ -67,7 +69,7 @@ class VisionEncoderPretrain(nn.Module):
         self.classifier = BaseClassifier(input_size=encoder_fea_dim,
                                          hidden_size=[int(encoder_fea_dim / 2), int(encoder_fea_dim / 4),
                                                       int(encoder_fea_dim / 8)],
-                                         output_size=1, drop_out=drop_out, name='VisionRegClassifier', )
+                                         output_size=1, drop_out=drop_out)
         
         self.criterion = torch.nn.MSELoss()
 

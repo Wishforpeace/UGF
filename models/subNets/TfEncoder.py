@@ -59,7 +59,7 @@ class TfEncoder(nn.Module):
 
     def forward(self, src, has_mask=True, src_key_padding_mask=None):
         src = self.pos_encoder(src)
-        
+
         src = src.transpose(0, 1)
         if has_mask:
             device = src.device

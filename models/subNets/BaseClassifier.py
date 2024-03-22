@@ -4,9 +4,8 @@ import torch.nn as nn
 
 
 class BaseClassifier(nn.Module):
-    def __init__(self, input_size, hidden_size, output_size, drop_out=0.3, name=None):
+    def __init__(self, input_size, hidden_size, output_size, drop_out=0.3):
         super(BaseClassifier, self).__init__()
-        self.name = name
         # ModuleList = [nn.Dropout(p=drop_out)]
         ModuleList = []
         for i, h in enumerate(hidden_size):

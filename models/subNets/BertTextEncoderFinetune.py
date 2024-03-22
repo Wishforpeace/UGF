@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from models.subNets.BaseClassifier import BaseClassifier
 from transformers import BertTokenizer, BertModel
-
+import sys
 
 class BertTextEncoder(nn.Module):
     def __init__(self, language='en'):
@@ -66,7 +66,7 @@ class BertTextEncoderPretrain(nn.Module):
         self.classifier = BaseClassifier(input_size=self.proj_fea_dim,
                                          hidden_size=[int(self.proj_fea_dim / 2), int(self.proj_fea_dim / 4),
                                                       int(self.proj_fea_dim / 8)],
-                                         output_size=1, drop_out=drop_out, name='RegClassifier', )
+                                         output_size=1, drop_out=drop_out)
         self.criterion = torch.nn.MSELoss()
         
 
@@ -97,10 +97,14 @@ class BertTextEncoderPretrain(nn.Module):
         decoder_path =  path+ '-decoder.pth'
         print('model loaded from:')
         if module == 'encoder':
+            print(encoder_path)
             self.encoder.load_state_dict(torch.load(encoder_path, map_location=self.device))
         if module == 'decoder':
+            print(decoder_path)
             self.classifier.load_state_dict(torch.load(decoder_path, map_location=self.device))
         if module == 'all' or module is None:
+            print(encoder_path)
+            print(decoder_path)
             self.encoder.load_state_dict(torch.load(encoder_path, map_location=self.device))
             self.classifier.load_state_dict(torch.load(decoder_path, map_location=self.device))
 

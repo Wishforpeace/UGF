@@ -3,7 +3,10 @@ import torch.nn as nn
 import torch.nn.functional as F
 from models.subNets.BaseClassifier import BaseClassifier
 from models.subNets.TfEncoder import  TfEncoder
+
 import sys
+
+from models.subNets.pooling import MultiheadSelfAttentionWithPooling
 
 class AudioEncoder(nn.Module):
     def __init__(self,args,fea_size=None, encoder_fea_dim=None, nhead=None, dim_feedforward=None,
@@ -21,7 +24,7 @@ class AudioEncoder(nn.Module):
                                 num_layers=num_layers,
                                 dropout=drop_out,
                                 activation='gelu')
-
+        self.multiheadPooling = MultiheadSelfAttentionWithPooling(embed_size=encoder_fea_dim,num_heads=nhead)
         self.device = self.args.device
         self.encoder.device = self.device
         self.activation = nn.Tanh()
@@ -33,7 +36,8 @@ class AudioEncoder(nn.Module):
         
         x = self.encoder(src=audio, has_mask=False, src_key_padding_mask=key_padding_mask)
         x = self.layernorm(x)
-        x = torch.mean(x, dim=-2, keepdim=True)
+        # x = torch.mean(x, dim=-2, keepdim=True)
+        x = self.multiheadPooling(x)
        # 考虑多头注意力池化
         return x
 
@@ -65,7 +69,7 @@ class AudioEncoderPretrain(nn.Module):
         self.classifier = BaseClassifier(input_size=encoder_fea_dim,
                                          hidden_size=[int(encoder_fea_dim / 2), int(encoder_fea_dim / 4),
                                                       int(encoder_fea_dim / 8)],
-                                         output_size=1, drop_out=drop_out, name='AudioRegClassifier', )
+                                         output_size=1, drop_out=drop_out)
         
         self.criterion = torch.nn.MSELoss()
 
@@ -84,8 +88,6 @@ class AudioEncoderPretrain(nn.Module):
         torch.save(self.encoder.state_dict(), encoder_path)
         torch.save(self.classifier.state_dict(), decoder_path)
         print('model saved at:')
-        print(encoder_path)
-        print(decoder_path)
 
     def load_model(self, module=None):
         path = self.args.model_save_path + f'{self.args.datasetName}-audio'

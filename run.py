@@ -28,10 +28,10 @@ def setup_seed(seed):
     random.seed(seed)
     torch.backends.cudnn.deterministic = True
 
-def run(args,seed):
+def run(args,seed,check):
     model_save_path = args.model_save_dir+f'/{str(seed)}/'
-    if not os.path.exists(model_save_path):
-        os.makedirs(model_save_path)
+    # if not os.path.exists(model_save_path):
+    #     os.makedirs(model_save_path)
     
     args.model_save_path = model_save_path
 
@@ -79,8 +79,9 @@ def run(args,seed):
                                       output_device=args.gpu_ids[0])
     
     atio = ATIO().getTrain(args)
+    
     # do train
-    atio.do_train(model, dataloader)
+    atio.do_train(model, dataloader,check)
 
 
     
@@ -98,78 +99,17 @@ def run(args,seed):
     return results
 
 
-def run_finetune(args, tune_times=50):
-    args.res_save_dir = os.path.join(args.res_save_dir, 'tunes')
-    init_args = args
-    has_debuged = [] # save used paras
-    save_file_path = os.path.join(args.res_save_dir, \
-                                f'{args.datasetName}-{args.modelName}-{args.train_mode}-tune.csv')
-    if not os.path.exists(os.path.dirname(save_file_path)):
-        os.makedirs(os.path.dirname(save_file_path))
-    
-    for i in range(tune_times):
-        # load free-most gpus
-        pynvml.nvmlInit()
-        # cancel random seed
-        setup_seed(int(time.time()))
-        args = init_args
-        config = ConfigTune(args)
-        args = config.get_config()
-        print(args)
-        # print debugging params
-        logger.info("#"*40 + '%s-(%d/%d)' %(args.modelName, i+1, tune_times) + '#'*40)
-        for k,v in args.items():
-            if k in args.d_paras:
-                logger.info(k + ':' + str(v))
-        logger.info("#"*90)
-        logger.info('Start running %s...' %(args.modelName))
-        # restore existed paras
-        if i == 0 and os.path.exists(save_file_path):
-            df = pd.read_csv(save_file_path)
-            for i in range(len(df)):
-                has_debuged.append([df.loc[i,k] for k in args.d_paras])
-        # check paras
-        cur_paras = [args[v] for v in args.d_paras]
-        if cur_paras in has_debuged:
-            logger.info('These paras have been used!')
-            time.sleep(3)
-            continue
-        has_debuged.append(cur_paras)
-        results = []
-        for j, seed in enumerate([1111]):
-            args.cur_time = j + 1
-            setup_seed(seed)
-            results.append(run(args))
-        # save results to csv
-        logger.info('Start saving results...')
-        if os.path.exists(save_file_path):
-            df = pd.read_csv(save_file_path)
-        else:
-            df = pd.DataFrame(columns = [k for k in args.d_paras] + [k for k in results[0].keys()])
-        # stat results
-        tmp = [args[c] for c in args.d_paras]
-        
-        for col in results[0].keys():
-            values = [r[col] for r in results]
-            tmp.append(round(sum(values) * 100 / len(values), 2))
-        
-        df.loc[len(df)] = tmp
-        df.to_csv(save_file_path, index=None)
-        logger.info('Results are saved to %s...' %(save_file_path))
-
-
-
-
-def run_pretrain(args):
+def run_finetune(args):
     args.res_save_dir = os.path.join(args.res_save_dir, args.train_mode)
     init_args = args
     model_results = {}
     seeds = args.seeds
     # run results
     for i, seed in enumerate(seeds):
+        check = {'Loss': 10000, 'MAE': 100}
         args = init_args
         # load config
-        if args.train_mode == "pretrain":
+        if args.train_mode == "finetune":
             config = ConfigPretrain(args)
         args = config.get_config()
         setup_seed(seed)
@@ -178,7 +118,7 @@ def run_pretrain(args):
         logger.info(args)
         # runnning
         args.cur_time = i+1
-        test_results = run(args,seed)
+        test_results = run(args,seed,check)
         # restore results
         model_results[seed]=test_results
 
@@ -191,8 +131,65 @@ def run_pretrain(args):
     save_path = os.path.join(args.res_save_dir,
                         args.modelName + '-' + args.datasetName + '-' + args.train_mode + '-' + datetime.datetime.now().strftime('%Y-%m-%d-%H%M') +'.csv')
 
-    if not os.path.exists(args.res_save_dir):
-        os.makedirs(args.res_save_dir)
+    # if not os.path.exists(args.res_save_dir):
+    #     os.makedirs(args.res_save_dir)
+
+
+    if os.path.exists(save_path):
+        df = pd.read_csv(save_path)
+    else:
+        df = pd.DataFrame(columns=["Model","Seed"] + criterions)
+    rows = []
+    # Populate the DataFrame with the new results
+    for seed, results in model_results.items():
+        row = {"Model": args.modelName, "Seed": seed}
+        
+        row.update(results)
+        rows.append(row)
+        # df = df.append(row, ignore_index=True)
+
+    df = pd.concat([df, pd.DataFrame(rows)], ignore_index=True)
+    df.to_csv(save_path, index=False)
+
+    logger.info('Results are added to %s...' %(save_path))
+
+
+
+def run_pretrain(args):
+    args.res_save_dir = os.path.join(args.res_save_dir, args.train_mode)
+    init_args = args
+    model_results = {}
+    seeds = args.seeds
+    # run results
+    for i, seed in enumerate(seeds):
+        check = {'Loss': 10000, 'MAE': 100}
+        args = init_args
+        # load config
+        if args.train_mode == "pretrain":
+            config = ConfigPretrain(args)
+        args = config.get_config()
+        setup_seed(seed)
+        args.seed = seed
+        logger.info('Start running %s...' %(args.modelName))
+        logger.info(args)
+        # runnning
+        args.cur_time = i+1
+        test_results = run(args,seed,check)
+        
+        # restore results
+        model_results[seed]=test_results
+
+
+    first_seed = list(model_results.keys())[0]
+    criterions = list(model_results[first_seed].keys())
+
+    
+    # load other results
+    save_path = os.path.join(args.res_save_dir,
+                        args.modelName + '-' + args.datasetName + '-' + args.train_mode + '-' + datetime.datetime.now().strftime('%Y-%m-%d-%H%M') +'.csv')
+
+    # if not os.path.exists(args.res_save_dir):
+    #     os.makedirs(args.res_save_dir)
 
 
     if os.path.exists(save_path):
@@ -200,12 +197,16 @@ def run_pretrain(args):
     else:
         df = pd.DataFrame(columns=["Model","Seed"] + criterions)
 
+    rows = []
     # Populate the DataFrame with the new results
     for seed, results in model_results.items():
         row = {"Model": args.modelName, "Seed": seed}
+        
         row.update(results)
-        df = df.append(row, ignore_index=True)
-
+        rows.append(row)
+        # df = df.append(row, ignore_index=True)
+        
+    df = pd.concat([df, pd.DataFrame(rows)], ignore_index=True)
     df.to_csv(save_path, index=False)
 
     logger.info('Results are added to %s...' %(save_path))
@@ -246,9 +247,9 @@ def set_log(args):
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--is_tune', type=bool, default=False,
+    parser.add_argument('--is_tune', type=bool, default=True,
                         help='tune parameters ?')
-    parser.add_argument('--train_mode', type=str, default="pretrain",
+    parser.add_argument('--train_mode', type=str, default="finetune",
                         help='pretrain / finetune')
     parser.add_argument('--modelName', type=str, default='maf',
                         help='support maf')
@@ -260,7 +261,7 @@ def parse_args():
                         help='path to save results.')
     parser.add_argument('--res_save_dir', type=str, default='/mnt/disk1/wyx/MSA/Lab/ModalAdaptationMSA/results/results',
                         help='path to save results.')
-    parser.add_argument('--gpu_ids', type=list, default=[1],
+    parser.add_argument('--gpu_ids', type=list, default=[0,1],
                         help='indicates the gpus will be used. If none, the most-free gpu will be used!')
     return parser.parse_args()
 
@@ -295,14 +296,19 @@ if __name__ == '__main__':
     #         else:
     #             run_pretrain(args)
                 # run_mono_modal(args)
-    args.seeds = [1111, 1112,1113,1114]
-    # for i in ['text','vision','audio']:
-    for data_name in ['mosi']:
+    args.seeds = [1111,1112,1113,1114]
+    
+    args.is_concat,args.is_ulgm,args.is_almt,args.is_agm = [False,False,False,False]
+    for data_name in ['mosei','mosi']:
         args.datasetName = data_name
-        if args.is_tune:    
-            run_finetune(args, tune_times=50)
-        else:
-            run_pretrain(args)
+        for i in ['text','audio','vision','fusion']:
+            args.modelName = i
+            if i == 'fusion':
+                args.train_mode='finetune'
+                run_finetune(args)
+            else:
+                args.train_mode='pretrain'
+                run_pretrain(args)
 
 
 

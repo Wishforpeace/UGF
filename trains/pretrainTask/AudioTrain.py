@@ -29,12 +29,13 @@ class Audio():
         self.epochs = self.args.audio_epochs
         self.metrics = MetricsTop(args.train_mode).getMetics(args.datasetName)
 
-    def do_train(self,model,dataloader):
-        check = {'Loss': 10000, 'MAE': 100}
+    def do_train(self,model,dataloader,check):
+        
         if self.args.parallel:
             optimizer =  optim.Adam(model.module.Model.parameters(),lr=self.args.learning_rate,weight_decay=self.args.weight_decay)
         else:
             optimizer =  optim.Adam(model.Model.parameters(),lr=self.args.learning_rate)
+        # optimizer,scheduler = build_optimizer(args=self.args,optimizer_grouped_parameters=model.parameters(),epochs=self.epochs)
 
         epoch, best_epoch = 0, 0
 
@@ -59,16 +60,18 @@ class Audio():
             y_true =[]
             with tqdm(dataloader['train']) as td:
                 for step,batch_data in enumerate(td):
+                    
                     optimizer.zero_grad()
                     audio = batch_data['audio'].clone().detach().to(self.args.device)
                     labels = batch_data['labels']['M'].clone().detach().to(self.args.device)
                     mask = batch_data['audio_padding_mask'].clone().detach().to(self.args.device)
-                    pred, fea, loss = model(audio=audio, mask=mask,labels = labels.squeeze())
+                    pred, fea, loss = model(audio=audio, audio_mask=mask,labels = labels.squeeze())
                     y_true.append(labels)
                     y_pred.append(pred)
                     loss = loss.mean()
                     loss.backward()
                     optimizer.step()
+                    # scheduler.step()
                 train_loss += loss.item()
 
             train_loss = train_loss / len(dataloader['train'])
@@ -106,7 +109,7 @@ class Audio():
                     audio = batch_data['audio'].clone().detach().to(self.args.device)
                     labels = batch_data['labels']['M'].clone().detach().to(self.args.device)
                     mask = batch_data['audio_padding_mask'].clone().detach().to(self.args.device)
-                    pred, fea, loss = model(audio=audio, mask=mask, labels=labels.squeeze())
+                    pred, fea, loss = model(audio=audio, audio_mask=mask, labels=labels.squeeze())
                     val_loss += loss.mean().item()
                 y_pred.append(pred)
                 y_true.append(labels)

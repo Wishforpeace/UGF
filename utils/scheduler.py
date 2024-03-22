@@ -6,21 +6,21 @@ from torch.optim.lr_scheduler import ReduceLROnPlateau
 
 
 
-def build_optimizer(args,model):
+def build_optimizer(args,optimizer_grouped_parameters,epochs):
         if len(args.gpu_ids)>1:
             if args.optim == 'sgd':
-                optimizer = SGD(model.module.Model.parameters(),lr=args.learning_rate,momentum=0.9,weight_decay=1e-4)
+                optimizer = SGD(optimizer_grouped_parameters,lr=args.learning_rate,momentum=0.9,weight_decay=1e-4)
             elif args.optim == 'adamw':
-                optimizer = AdamW(model.module.Model.parameters(),lr=args.learning_rate,weight_decay=args.weight_decay)
+                optimizer = AdamW(optimizer_grouped_parameters,lr=args.learning_rate,weight_decay=args.weight_decay)
             elif args.optim == "adam":
-                optimizer = Adam(model.module.Model.parameters(),lr=args.learning_rate)
+                optimizer = Adam(optimizer_grouped_parameters,lr=args.learning_rate)
         else:
             if args.optim == 'sgd':
-                optimizer = SGD(model.Model.parameters(),lr=args.learning_rate,momentum=0.9,weight_decay=1e-4)
+                optimizer = SGD(optimizer_grouped_parameters,lr=args.learning_rate,momentum=0.9,weight_decay=1e-4)
             elif args.optim == 'adamw':
-                optimizer = AdamW(model.Model.parameters(),lr=args.learning_rate,weight_decay=args.weight_decay)
+                optimizer = AdamW(optimizer_grouped_parameters,lr=args.learning_rate,weight_decay=args.weight_decay)
             elif args.optim == "adam":
-                optimizer = Adam(model.Model.parameters(),lr=args.learning_rate)
+                optimizer = Adam(optimizer_grouped_parameters,lr=args.learning_rate)
         # if args.lr_scalar == 'lrstep':
         #     scheduler = lr_scheduler.StepLR(optimizer,args.lr_decay_step,args.lr_decay_ratio)
         # elif args.lr_scalar == 'cosinestep':
@@ -30,8 +30,8 @@ def build_optimizer(args,model):
         # elif args.lr_scalar == 'onecyclewarmup':
         #     scheduler = lr_scheduler.OneCycleLR(optimizer, max_lr=0.001, total_steps=args.epochs, anneal_strategy='linear')
 
-        scheduler_steplr = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=0.8 * args.epochs)
-        scheduler_warmup = GradualWarmupScheduler(optimizer, multiplier=1, total_epoch=0.2 * args.epochs, after_scheduler=scheduler_steplr)
+        scheduler_steplr = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=0.8 * epochs)
+        scheduler_warmup = GradualWarmupScheduler(optimizer, multiplier=1, total_epoch=0.2 * epochs, after_scheduler=scheduler_steplr)
 
         # scheduler_warmup = lr_scheduler.CosineAnnealingWarmRestarts(optimizer,eta_min=1e-6,last_epoch=-1)
         return optimizer,scheduler_warmup
