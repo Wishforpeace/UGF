@@ -67,7 +67,7 @@ class BertTextEncoderPretrain(nn.Module):
                                          hidden_size=[int(self.proj_fea_dim / 2), int(self.proj_fea_dim / 4),
                                                       int(self.proj_fea_dim / 8)],
                                          output_size=1, drop_out=drop_out)
-        self.criterion = torch.nn.MSELoss()
+        self.criterion = torch.nn.MSELoss(reduction='none')
         
 
     def forward(self, text, label):

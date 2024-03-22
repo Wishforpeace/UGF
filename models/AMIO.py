@@ -48,6 +48,7 @@ class AMIO(nn.Module):
 
 
     def save_model(self):
+       
         self.Model.save_model()
         # # save all modules
         # path = self.args.model_save_path + f'{self.args.modelName}-{self.args.datasetName}-{self.args.train_mode}_fusion.pth'

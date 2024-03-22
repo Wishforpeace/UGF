@@ -71,7 +71,7 @@ class VisionEncoderPretrain(nn.Module):
                                                       int(encoder_fea_dim / 8)],
                                          output_size=1, drop_out=drop_out)
         
-        self.criterion = torch.nn.MSELoss()
+        self.criterion = torch.nn.MSELoss(reduction='none')
 
     def forward(self, vision, label, key_padding_mask):
         

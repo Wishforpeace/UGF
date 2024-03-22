@@ -156,8 +156,8 @@ def run_finetune(args):
 
 
 def run_pretrain(args):
-    args.res_save_dir = os.path.join(args.res_save_dir, args.train_mode)
     init_args = args
+    res_save_dir = os.path.join(args.res_save_dir, args.train_mode)
     model_results = {}
     seeds = args.seeds
     # run results
@@ -185,8 +185,9 @@ def run_pretrain(args):
 
     
     # load other results
-    save_path = os.path.join(args.res_save_dir,
+    save_path = os.path.join(res_save_dir,
                         args.modelName + '-' + args.datasetName + '-' + args.train_mode + '-' + datetime.datetime.now().strftime('%Y-%m-%d-%H%M') +'.csv')
+
 
     # if not os.path.exists(args.res_save_dir):
     #     os.makedirs(args.res_save_dir)
@@ -296,12 +297,13 @@ if __name__ == '__main__':
     #         else:
     #             run_pretrain(args)
                 # run_mono_modal(args)
-    args.seeds = [1111,1112,1113,1114]
+    args.seeds = [1111,1112,1114,1115]
     
     args.is_concat,args.is_ulgm,args.is_almt,args.is_agm = [False,False,False,False]
-    for data_name in ['mosei','mosi']:
+    for data_name in ['mosei']:
         args.datasetName = data_name
         for i in ['text','audio','vision','fusion']:
+        # for i in ['audio']:
             args.modelName = i
             if i == 'fusion':
                 args.train_mode='finetune'

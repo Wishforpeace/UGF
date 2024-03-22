@@ -111,7 +111,7 @@ class MAF(nn.Module):
                                            hidden_size=hidden_size[2:],
                                            output_size=1, drop_out=self.args.post_fusion_dropout )
 
-        self.criterion = torch.nn.MSELoss()
+        self.criterion = torch.nn.MSELoss(reduction='none')
         # 特征融合
         if self.args.is_almt:
             self.h_hyper_layer = HhyperLearningEncoder(dim=args.post_fusion_dim, depth=args.AHL_depth, heads=8, dim_head=16, dropout = 0.)
