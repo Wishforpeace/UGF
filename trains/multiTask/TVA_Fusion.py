@@ -52,10 +52,14 @@ class TVA_Fusion():
         train_loss = 0.0
         
         if self.args.parallel:
-            model.module.Model.load_model(load_pretrain=load_pretrain)
+            model.module.Model.load_model(load_pretrain=False)
         else:
-            model.Model.load_model(load_pretrain=load_pretrain)
+            model.Model.load_model(load_pretrain=False)
 
+        epoch_score_t = 0.
+        epoch_score_a = 0.
+        epoch_score_v = 0.
+        self.epsilon = self.args.epsilon
         for epoch in range(1,self.epochs+1):
             model.train()
             if self.args.parallel:
@@ -75,6 +79,7 @@ class TVA_Fusion():
             with tqdm(dataloader['train']) as td:
                 for step,batch_data in enumerate(td):
                     step = step+1
+                    iteration = (epoch-1)*self.args.batch_size + step
                     optimizer.zero_grad()
                     text = batch_data['text'].clone().detach().to(self.args.device)
                     vision = batch_data['vision'].clone().detach().to(self.args.device)
@@ -82,20 +87,67 @@ class TVA_Fusion():
                     audio = batch_data['audio'].clone().detach().to(self.args.device)
                     audio_mask = batch_data['audio_padding_mask'].clone().detach().to(self.args.device)
                     labels = batch_data['labels']['M'].clone().detach().to(self.args.device).view(-1)
-                    pred, fea, loss = model(text=text, vision=vision, audio=audio, vision_mask=vision_mask, audio_mask=audio_mask, labels = labels.squeeze())
+                    pred_fusion,pred_t,pred_a,pred_v,loss = model(text=text, vision=vision, audio=audio, vision_mask=vision_mask, audio_mask=audio_mask, labels = labels.squeeze())
                     loss = loss.mean()
+                    t_difference = torch.tanh(torch.abs(pred_t - labels))
+                    t_score = torch.sum(1/(t_difference+self.epsilon))/pred_t.size(0)
+                    v_difference = torch.tanh(torch.abs(pred_v - labels))
+                    v_score = torch.sum(1/(v_difference+self.epsilon))/pred_t.size(0)
+                    a_difference = torch.tanh(torch.abs(pred_a - labels))
+                    a_score = torch.sum(1/(a_difference+self.epsilon))/pred_t.size(0)
+                    
+                    
+
+
                     y_true.append(labels.cpu())
-                    y_pred.append(pred.cpu())
+                    y_pred.append(pred_fusion.cpu())
                     loss.backward()
+                    
+                    if self.args.is_agm:
+                        ratio_t = math.exp((2*t_score-a_score-v_score)/2)
+                        ratio_a = math.exp((2*a_score-t_score-v_score)/2)
+                        ratio_v = math.exp((2*v_score-t_score-a_score)/2)
+
+                        
+                        optimal_ratio_t = math.exp(2*epoch_score_t-epoch_score_a-epoch_score_v)
+                        optimal_ratio_a = math.exp(2*epoch_score_a-epoch_score_t-epoch_score_v)
+                        optimal_ratio_v = math.exp(2*epoch_score_v-epoch_score_a-epoch_score_t)
+
+
+                        coeff_t = math.exp(self.args.alpha*(optimal_ratio_t - ratio_t))
+                        coeff_a = math.exp(self.args.alpha*(optimal_ratio_a - ratio_a))
+                        coeff_v = math.exp(self.args.alpha*(optimal_ratio_v - ratio_v))
+
+
+                        
+                        epoch_score_t = epoch_score_t * (iteration - 1) / iteration + t_score / iteration
+                        epoch_score_a = epoch_score_a * (iteration - 1) / iteration + a_score / iteration
+                        epoch_score_v = epoch_score_v * (iteration - 1) / iteration + v_score / iteration
+                        if self.args.parallel:
+                            model.module.Model.update_scale(coeff_t,coeff_a,coeff_v)
+                            grad_max = torch.max(model.module.Model.mono_decoder.MLP[-1].weight.grad)
+                            grad_min = torch.min(model.module.Model.mono_decoder.MLP[-1].weight.grad)
+
+                        else:
+                            model.Model.update_scale(coeff_t,coeff_a,coeff_v)
+                            grad_max = torch.max(model.Model.mono_decoder.MLP[-1].weight.grad)
+                            grad_min = torch.min(model.Model.mono_decoder.MLP[-1].weight.grad)
+
+                        if grad_max > 1.0 and grad_min < 1.0:
+                            nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+
+
                     train_loss += loss.item()
                     optimizer.step()
 
+
                     # scheduler.step()
-                    if step % 10 == 1 and epoch > save_start_epoch:
-                        val_results = self.do_test(model, dataloader['valid'], mode="VAL")
-                    if epoch > save_start_epoch:
-                        check = check_and_save(model=model,result=val_results, check=check,parallel=self.args.parallel)
-                        torch.cuda.empty_cache()
+                    
+            val_results = self.do_test(model, dataloader['valid'], mode="VAL")
+            if epoch > save_start_epoch:
+                heck = check_and_save(model=model,result=val_results, check=check,parallel=self.args.parallel)
+            
+            torch.cuda.empty_cache()
             
                      
             train_loss = train_loss / len(dataloader['train'])
@@ -133,9 +185,9 @@ class TVA_Fusion():
                     audio = batch_data['audio'].clone().detach().to(self.args.device)
                     audio_mask = batch_data['audio_padding_mask'].clone().detach().to(self.args.device)
                     labels = batch_data['labels']['M'].clone().detach().to(self.args.device).view(-1)
-                    pred, fea, loss = model(text=text, vision=vision, audio=audio, vision_mask=vision_mask, audio_mask=audio_mask, labels = labels.squeeze())
+                    pred_fusion,pred_t,pred_a,pred_v,loss = model(text=text, vision=vision, audio=audio, vision_mask=vision_mask, audio_mask=audio_mask, labels = labels.squeeze())
                     val_loss += loss.mean()
-                y_pred.append(pred)
+                y_pred.append(pred_fusion)
                 y_true.append(labels)
         val_loss = val_loss / len(dataloader)
         logger.info(mode+"-(%s)" % self.args.modelName + " >> loss: %.4f " % val_loss)

@@ -297,12 +297,12 @@ if __name__ == '__main__':
     #         else:
     #             run_pretrain(args)
                 # run_mono_modal(args)
-    args.seeds = [1111,1112,1114,1115]
+    args.seeds = [1111,1112,1113,1114]
     
-    args.is_concat,args.is_ulgm,args.is_almt,args.is_agm = [False,False,False,False]
-    for data_name in ['mosei']:
+    args.is_concat,args.is_ulgm,args.is_almt,args.is_agm = [False,False,False,True]
+    for data_name in ['mosi']:
         args.datasetName = data_name
-        for i in ['text','audio','vision','fusion']:
+        for i in ['fusion']:
         # for i in ['audio']:
             args.modelName = i
             if i == 'fusion':

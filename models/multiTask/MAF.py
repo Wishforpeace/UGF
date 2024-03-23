@@ -25,7 +25,7 @@ class MAF(nn.Module):
         self.scale_a = 1.0
         self.scale_t = 1.0
         self.scale_v = 1.0
-
+        self.epsilon = 1.0
         self.args = args
         self.device = args.device
         # self.h_hyper = nn.Parameter(torch.ones(1, 8, args.post_fusion_dim))
@@ -112,6 +112,7 @@ class MAF(nn.Module):
                                            output_size=1, drop_out=self.args.post_fusion_dropout )
 
         self.criterion = torch.nn.MSELoss(reduction='none')
+
         # 特征融合
         if self.args.is_almt:
             self.h_hyper_layer = HhyperLearningEncoder(dim=args.post_fusion_dim, depth=args.AHL_depth, heads=8, dim_head=16, dropout = 0.)
@@ -156,6 +157,13 @@ class MAF(nn.Module):
         x_a_embed = self.audio_encoder(audio, audio_padding_mask)
         
         x_fusion_embed = torch.cat((x_t_embed,x_v_embed,x_a_embed),dim=-1)
+        
+        if self.args.is_agm:
+            x_t_embed = self.m_t_o(x_t_embed)
+            x_v_embed = self.m_v_o(x_v_embed)
+            x_a_embed = self.m_a_o(x_a_embed)
+
+
 
         pred_t = self.mono_decoder(x_t_embed).squeeze()
         pred_a = self.mono_decoder(x_a_embed).squeeze()
@@ -165,8 +173,8 @@ class MAF(nn.Module):
         pred_loss = self.criterion(pred_fusion, labels)
         mono_loss = self.criterion(pred_t, labels) + self.criterion(pred_a, labels) + self.criterion(pred_v,labels)
         loss = pred_loss + mono_loss
-
-        return pred_fusion,x_fusion_embed,loss
+       
+        return pred_fusion,pred_t,pred_a,pred_v,loss
 
         # res = {
         #     'M': output_fusion, 

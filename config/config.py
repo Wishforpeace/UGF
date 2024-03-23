@@ -131,7 +131,7 @@ class ConfigPretrain():
                     'vision_epochs':100,
                     'audio_epochs':100,
                     'fusion_epochs':100,
-                    'finetune_epochs':75,
+                    'finetune_epochs':50,
                     'encoder_fea_dim':768,
                     'text_out': 768, 
                     'audio_out': 16,
