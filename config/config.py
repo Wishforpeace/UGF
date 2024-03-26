@@ -117,7 +117,7 @@ class ConfigPretrain():
                 'modulation_ends ':50,
                 'lr_scalar':'onecyclewarmup',
                 'optim':'adamw',
-                'learning_rate':1e-4,
+                'learning_rate':1e-5,
                 'weight_decay':1e-3,
                 'lr_decay_step':10,
                 'lr_decay_ratio':0.1
@@ -155,12 +155,12 @@ class ConfigPretrain():
                     'H': 3.0
                 },
                 'mosei':{
-                    'batch_size': 64,
-                    'text_epochs':100,
+                    'batch_size': 32,
+                    'text_epochs':50,
                     'vision_epochs':100,
                     'audio_epochs':100,
                     'fusion_epochs':100,
-                    'finetune_epochs':75,
+                    'finetune_epochs':50,
                     'encoder_fea_dim':768,
                     'text_out': 768, 
                     'audio_out': 16,

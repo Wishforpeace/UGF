@@ -143,11 +143,7 @@ class TVA_Fusion():
 
                     scheduler.step()
                     
-            val_results = self.do_test(model, dataloader['valid'], mode="VAL")
-            if epoch > save_start_epoch:
-                check = check_and_save(model=model,result=val_results, check=check,parallel=self.args.parallel)
-            
-            torch.cuda.empty_cache()
+           
             
                      
             train_loss = train_loss / len(dataloader['train'])
@@ -161,7 +157,11 @@ class TVA_Fusion():
             train_results = self.metrics(out_pred, true)
             logger.info('%s: >> ' %('fusion') + dict_to_str(train_results))
 
-    
+            val_results = self.do_test(model, dataloader['valid'], mode="VAL")
+            if epoch > save_start_epoch:
+                check = check_and_save(model=model,result=val_results, check=check,parallel=self.args.parallel)
+            
+            torch.cuda.empty_cache()
                 
                     
             

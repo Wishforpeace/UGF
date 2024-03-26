@@ -31,11 +31,11 @@ class Text():
 
     def do_train(self,model,dataloader,check):
         
-        if self.args.parallel:
-            optimizer =  optim.Adam(model.module.Model.parameters(),lr=self.args.learning_rate,weight_decay=self.args.weight_decay)
-        else:
-            optimizer =  optim.Adam(model.Model.parameters(),lr=self.args.learning_rate)
-        # optimizer,scheduler = build_optimizer(args=self.args,optimizer_grouped_parameters=model.parameters(),epochs=self.epochs)
+        # if self.args.parallel:
+        #     optimizer =  optim.Adam(model.module.Model.parameters(),lr=self.args.learning_rate,weight_decay=self.args.weight_decay)
+        # else:
+        #     optimizer =  optim.Adam(model.Model.parameters(),lr=self.args.learning_rate)
+        optimizer,scheduler = build_optimizer(args=self.args,optimizer_grouped_parameters=model.parameters(),epochs=self.epochs)
 
         epoch, best_epoch = 0, 0
 
@@ -45,15 +45,17 @@ class Text():
         for epoch in range(1,self.epochs+1):
             model.train()
             if self.args.parallel:
-                if epoch < train_all_epoch:
-                    model.module.Model.set_train([False, True])
-                else:
-                    model.module.Model.set_train([True, True])
+                model.module.Model.set_train([True, True])
+                # if epoch < train_all_epoch:
+                #     model.module.Model.set_train([False, True])
+                # else:
+                #     model.module.Model.set_train([True, True])
             else:
-                if epoch < train_all_epoch:
-                    model.Model.set_train([False, True])
-                else:
-                    model.Model.set_train([True, True])
+                # if epoch < train_all_epoch:
+                #     model.Model.set_train([False, True])
+                # else:
+                #     model.Model.set_train([True, True])
+                model.Model.set_train([True, True])
 
             logger.info("TRAIN-(%s) epoch(%d)" % (self.args.modelName, epoch))
             y_pred =[]
@@ -69,7 +71,7 @@ class Text():
                     y_pred.append(pred.cpu())
                     loss.backward()
                     optimizer.step()
-                    # scheduler.step()
+                    scheduler.step()
 
                 train_loss += loss.item()
 
