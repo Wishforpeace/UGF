@@ -24,8 +24,8 @@ class VisionEncoder(nn.Module):
                                 num_layers=num_layers,
                                 dropout=drop_out,
                                 activation='gelu')
-        self.multiheadPooling = MultiheadSelfAttentionWithPooling(embed_size=encoder_fea_dim,num_heads=nhead)
-
+        
+        
         self.device = self.args.device
         self.encoder.device = self.device
         self.activation = nn.Tanh()
@@ -34,10 +34,11 @@ class VisionEncoder(nn.Module):
         self.dense = nn.Linear(encoder_fea_dim, encoder_fea_dim)
 
     def forward(self, vision, key_padding_mask):
-        
         x = self.encoder(src=vision, has_mask=False, src_key_padding_mask=key_padding_mask)
+
         x = self.layernorm(x)
-        x = self.multiheadPooling(x)
+        
+        
        # 考虑多头注意力池化
         return x
 
@@ -61,21 +62,23 @@ class VisionEncoderPretrain(nn.Module):
                                     fea_size=self.args.feature_dims[2],
                                     encoder_fea_dim=self.args.encoder_fea_dim,
                                     nhead=self.args.vision_nhead,
-                                    dim_feedforward=self.args.feature_dims[2],
+                                    dim_feedforward=self.args.encoder_fea_dim,
                                     num_layers=self.args.vision_tf_num_layers,
                                     drop_out=self.args.post_vision_dropout)
-        
 
         self.classifier = BaseClassifier(input_size=encoder_fea_dim,
                                          hidden_size=[int(encoder_fea_dim / 2), int(encoder_fea_dim / 4),
                                                       int(encoder_fea_dim / 8)],
                                          output_size=1, drop_out=drop_out)
-        
+        self.multiheadPooling = MultiheadSelfAttentionWithPooling(embed_size=encoder_fea_dim,num_heads=self.args.vision_nhead)
+
         self.criterion = torch.nn.MSELoss(reduction='none')
 
     def forward(self, vision, label, key_padding_mask):
         
         x = self.encoder(vision, key_padding_mask)
+        x = self.multiheadPooling(x)
+        
         pred = self.classifier(x).squeeze()
         loss = self.criterion(pred.squeeze(), label.squeeze())
         return pred, x, loss

@@ -15,6 +15,10 @@ from models.subNets.BaseClassifier import BaseClassifier
 from models.subNets.VisionEncoderFinetune import VisionEncoder
 from models.subNets.AudioEncoderFinetune import AudioEncoder
 from models.subNets.BertTextEncoderFinetune import BertTextEncoder
+from models.FusionTransformer.transformer import LayerFusionTransformer
+from models.subNets.pooling import MultiheadSelfAttentionWithPooling
+
+
 
 __all__ = ['MAF']
 
@@ -82,13 +86,13 @@ class MAF(nn.Module):
 
 
 
-        self.text_encoder = BertTextEncoder()
+        self.text_encoder = BertTextEncoder(self.args.language)
         self.vision_encoder = VisionEncoder(
                                     args=self.args,
                                     fea_size=self.args.feature_dims[2],
                                     encoder_fea_dim=self.args.encoder_fea_dim,
                                     nhead=self.args.vision_nhead,
-                                    dim_feedforward=self.args.feature_dims[2],
+                                    dim_feedforward=self.args.encoder_fea_dim,
                                     num_layers=self.args.vision_tf_num_layers,
                                     drop_out=self.args.post_vision_dropout)
         
@@ -97,7 +101,7 @@ class MAF(nn.Module):
                                     fea_size=self.args.feature_dims[1],
                                     encoder_fea_dim=self.args.encoder_fea_dim,
                                     nhead=self.args.audio_nhead,
-                                    dim_feedforward=self.args.feature_dims[1],
+                                    dim_feedforward=self.args.encoder_fea_dim,
                                     num_layers=self.args.audio_tf_num_layers,
                                     drop_out=self.args.post_audio_dropout)
         
@@ -111,6 +115,8 @@ class MAF(nn.Module):
                                            hidden_size=hidden_size[2:],
                                            output_size=1, drop_out=self.args.post_fusion_dropout )
 
+
+        self.l2norm = Normalize(2)
         self.criterion = torch.nn.MSELoss(reduction='none')
 
         # 特征融合
@@ -118,7 +124,8 @@ class MAF(nn.Module):
             self.h_hyper_layer = HhyperLearningEncoder(dim=args.post_fusion_dim, depth=args.AHL_depth, heads=8, dim_head=16, dropout = 0.)
             self.fusion_layer = CrossTransformer(source_num_frames=8, tgt_num_frames=8, dim=args.post_fusion_dim, depth=args.fusion_layer_depth, heads=8, mlp_dim=args.post_fusion_dim)
         
-       
+        self.multiheadPooling = MultiheadSelfAttentionWithPooling(embed_size=encoder_fea_dim,num_heads=self.args.fusion_nhead)
+        
         # 梯度更新
         if self.args.is_agm:
             self.m_t_o = Modality_out()
@@ -129,7 +136,8 @@ class MAF(nn.Module):
             self.m_a_o.register_full_backward_hook(self.hooka)
             self.m_v_o.register_full_backward_hook(self.hookv)
 
-
+       
+        
     
     def hookt(self,m,ginp,gout):
         gnew = ginp[0].clone()
@@ -152,10 +160,19 @@ class MAF(nn.Module):
 
 
     def forward(self, text, vision, audio, vision_padding_mask, audio_padding_mask,labels):
-        x_t_embed = self.text_encoder(text)
+        x_t_embed = self.text_encoder(text)[0]
         x_v_embed = self.vision_encoder(vision, vision_padding_mask)
         x_a_embed = self.audio_encoder(audio, audio_padding_mask)
         
+        x_t_embed = self.l2norm(x_t_embed)
+        x_v_embed = self.l2norm(x_v_embed)
+        x_a_embed = self.l2norm(x_a_embed)
+
+        x_t_embed = x_t_embed[:,0,:].unsqueeze(1)
+        x_v_embed = self.multiheadPooling(x_v_embed)
+        x_a_embed = self.multiheadPooling(x_a_embed)
+        
+
         x_fusion_embed = torch.cat((x_t_embed,x_v_embed,x_a_embed),dim=-1)
         
         if self.args.is_agm:
@@ -163,18 +180,45 @@ class MAF(nn.Module):
             x_v_embed = self.m_v_o(x_v_embed)
             x_a_embed = self.m_a_o(x_a_embed)
 
+        dropout_rate = F.softmax(1-torch.tensor([self.scale_t, self.scale_v, self.scale_a]), dim=0)
+        
+        x_t_embed = F.dropout(x_t_embed, p=dropout_rate[0].item(), training=self.training)
+        x_v_embed = F.dropout(x_t_embed, p=dropout_rate[1].item(), training=self.training)
+        x_a_embed = F.dropout(x_t_embed, p=dropout_rate[2].item(), training=self.training)
 
 
         pred_t = self.mono_decoder(x_t_embed).squeeze()
         pred_a = self.mono_decoder(x_a_embed).squeeze()
         pred_v = self.mono_decoder(x_v_embed).squeeze()
+        
+
         pred_fusion = self.TVA_decoder(x_fusion_embed).squeeze()
 
+    
         pred_loss = self.criterion(pred_fusion, labels)
-        mono_loss = self.criterion(pred_t, labels) + self.criterion(pred_a, labels) + self.criterion(pred_v,labels)
+
+       
+
+
+
+
+
+        loss_t = self.criterion(pred_t, labels)
+        loss_a = self.criterion(pred_a, labels)
+        loss_v = self.criterion(pred_v, labels)
+
+       
+        
+        # weighted_mono_loss = weighted[0].item()*loss_t + weighted[1].item()*loss_v + weighted[2].item()*loss_a
+
+
+        mono_loss = loss_t + loss_a + loss_v
         loss = pred_loss + mono_loss
        
-        return pred_fusion,pred_t,pred_a,pred_v,loss
+
+
+
+        return pred_fusion,pred_t,pred_a,pred_v,loss.mean()
 
         # res = {
         #     'M': output_fusion, 
@@ -372,7 +416,29 @@ class MAF(nn.Module):
         torch.save(self.state_dict(), mode_path)
         
 
+    def align_sequences(self,sequences, max_seq_length=50):
+        """
+        Align a batch of sequences to the same length by padding or truncating.
 
+        Args:
+            sequences (Tensor): A tensor of sequences with shape (batch_size, seq_length, feature_dim).
+            max_seq_length (int): The maximum sequence length to align to.
+
+        Returns:
+            Tensor: A tensor of aligned sequences with shape (batch_size, max_seq_length, feature_dim).
+        """
+        batch_size, seq_length, feature_dim = sequences.shape
+        # Truncate sequences if they are longer than max_seq_length
+        if seq_length > max_seq_length:
+            sequences = sequences[:, :max_seq_length, :]
+
+        # Pad sequences with the last element if they are shorter than max_seq_length
+        if seq_length < max_seq_length:
+            # Extract the last element from each sequence and repeat it
+            last_elements = sequences[:, -1, :].unsqueeze(1).repeat(1, max_seq_length - seq_length, 1)
+            sequences = torch.cat([sequences, last_elements], dim=1)
+
+        return sequences
 
 
 
@@ -400,3 +466,21 @@ class projector(nn.Module):
     def forward(self, x):
         x = self.fc(x)
         return x
+
+
+class Normalize(nn.Module):
+    def __init__(self, power=2):
+        super(Normalize, self).__init__()
+        self.power = power
+
+    def forward(self, x):
+        norm = x.pow(self.power).sum(1, keepdim=True).pow(1. / self.power)
+        out = x.div(norm)
+        return out
+    
+
+
+
+    
+
+

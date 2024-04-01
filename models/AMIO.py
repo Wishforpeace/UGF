@@ -30,10 +30,9 @@ class AMIO(nn.Module):
         lastModel = MODEL_MAP[args.modelName]
         self.Model = lastModel(args)
         self.args = args
-    def forward(self,text=None, audio=None, vision=None,audio_mask=None, vision_mask=None, labels=None):
+    def forward(self,text=None, audio=None, vision=None, audio_mask=None, vision_mask=None, labels=None):
         if text != None and audio == None and vision == None:
             return self.Model(text,labels)
-
         if vision != None and audio == None and text == None:
             return self.Model(vision=vision, label=labels, key_padding_mask=vision_mask)
         

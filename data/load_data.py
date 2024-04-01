@@ -32,6 +32,10 @@ class MMDataset(Dataset):
             self.text = data[self.mode]['text'].astype(np.float32)
         
         self.vision = data[self.mode]['vision'].astype(np.float32)
+        
+
+      
+
         self.audio = data[self.mode]['audio'].astype(np.float32)
         self.rawText = data[self.mode]['raw_text']
         self.ids = data[self.mode]['id']
@@ -49,7 +53,7 @@ class MMDataset(Dataset):
 
         if self.args.datasetName == 'sims':
             for m in "TAV":
-                self.labels[m] = data[self.mode][self.args.train_mode+'_labels_'+m]
+                self.labels[m] = data[self.mode]['regression_labels_'+m]
 
         logger.info(f"{self.mode} samples: {self.labels['M'].shape}")
 
@@ -61,7 +65,9 @@ class MMDataset(Dataset):
         # if  self.args.need_normalized:
         #     self.__normalize()
         self.__gen_mask()
-
+       
+        # if self.mode == 'train':
+        #     self.__scale()
 
         # if self.args.need_truncated:
         #     self.__truncated()
@@ -77,13 +83,14 @@ class MMDataset(Dataset):
 
     def __gen_mask(self):
         vision_tmp = torch.sum(torch.tensor(self.data['vision']), dim=-1)
-        vision_mask = (vision_tmp == 0)
+        vision_mask = (vision_tmp == 0) 
 
         for i in range(self.size):
             vision_mask[i][0] = False
         vision_mask = torch.cat((vision_mask[:, 0:1], vision_mask), dim=-1)
 
         self.data['vision_padding_mask'] = vision_mask
+
         audio_tmp = torch.sum(torch.tensor(self.data['audio']), dim=-1)
         audio_mask = (audio_tmp == 0)
         for i in range(self.size):
@@ -91,6 +98,22 @@ class MMDataset(Dataset):
         audio_mask = torch.cat((audio_mask[:, 0:1], audio_mask), dim=-1)
         self.data['audio_padding_mask'] = audio_mask
 
+    # def __scale(self):
+    #     self.scaled_audio = self.data['audio'].copy()
+    #     self.scaled_vision = self.data['vision'].copy()
+    #     self.scaled_text = self.data['text'].copy()
+    #     for i in range(self.audio_fea_size[-1]):
+    #         max_num = np.max(self.data['audio'][:, :, i])
+    #         min_num = np.min(self.data['audio'][:, :, i])
+    #         self.scaled_audio[:, :, i] = (self.data['audio'][:, :, i] - min_num) / (max_num - min_num) * 2 - 1
+    #     for i in range(self.vision_fea_size[-1]):
+    #         max_num = np.max(self.data['vision'][:, :, i])
+    #         min_num = np.min(self.data['vision'][:, :, i])
+    #         self.scaled_vision[:, :, i] = (self.data['vision'][:, :, i] - min_num) / (max_num - min_num) * 2 - 1
+
+    #     self.scaled_audio = torch.tensor(self.scaled_audio)
+    #     self.scaled_vision = torch.tensor(self.scaled_vision)
+    #     self.scaled_text = torch.tensor(self.scaled_text)
 
     def __truncated(self):
         # NOTE: Here for dataset we manually cut the input into specific length.

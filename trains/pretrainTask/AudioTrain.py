@@ -45,11 +45,13 @@ class Audio():
         for epoch in range(1,self.epochs+1):
             model.train()
             if self.args.parallel:
+                # model.module.Model.set_train([True, True])
                 if epoch < train_all_epoch:
                     model.module.Model.set_train([False, True])
                 else:
                     model.module.Model.set_train([True, True])
             else:
+                # model.Model.set_train([True, True])
                 if epoch < train_all_epoch:
                     model.Model.set_train([False, True])
                 else:
@@ -63,7 +65,10 @@ class Audio():
                     
                     optimizer.zero_grad()
                     audio = batch_data['audio'].clone().detach().to(self.args.device)
-                    labels = batch_data['labels']['M'].clone().detach().to(self.args.device)
+                    if self.args.datasetName == 'sims':
+                        labels = batch_data['labels']['A'].clone().detach().to(self.args.device)
+                    else:
+                        labels = batch_data['labels']['M'].clone().detach().to(self.args.device)
                     mask = batch_data['audio_padding_mask'].clone().detach().to(self.args.device)
                     pred, fea, loss = model(audio=audio, audio_mask=mask,labels = labels.squeeze())
                     y_true.append(labels)
@@ -107,7 +112,10 @@ class Audio():
             with tqdm(dataloader) as td:
                 for batch_data in td:
                     audio = batch_data['audio'].clone().detach().to(self.args.device)
-                    labels = batch_data['labels']['M'].clone().detach().to(self.args.device)
+                    if self.args.datasetName == 'sims':
+                        labels = batch_data['labels']['A'].clone().detach().to(self.args.device)
+                    else:
+                        labels = batch_data['labels']['M'].clone().detach().to(self.args.device)
                     mask = batch_data['audio_padding_mask'].clone().detach().to(self.args.device)
                     pred, fea, loss = model(audio=audio, audio_mask=mask, labels=labels.squeeze())
                     val_loss += loss.mean().item()

@@ -262,7 +262,7 @@ def parse_args():
                         help='path to save results.')
     parser.add_argument('--res_save_dir', type=str, default='/mnt/disk1/wyx/MSA/Lab/ModalAdaptationMSA/results/results',
                         help='path to save results.')
-    parser.add_argument('--gpu_ids', type=list, default=[0,1],
+    parser.add_argument('--gpu_ids', type=list, default=[1],
                         help='indicates the gpus will be used. If none, the most-free gpu will be used!')
     return parser.parse_args()
 
@@ -297,13 +297,13 @@ if __name__ == '__main__':
     #         else:
     #             run_pretrain(args)
                 # run_mono_modal(args)
-    args.seeds = [1113]
+    args.seeds = [1111,1112,1113,1114]
     # args.seeds = [1234]
     args.is_concat,args.is_ulgm,args.is_almt,args.is_agm = [False,False,False,True]
     for data_name in ['mosei']:
         args.datasetName = data_name
-        for i in ['fusion']:
-        # for i in ['audio']:
+        for i in ['text','audio','vision']:
+        # for i in ['fusion']:
             args.modelName = i
             if i == 'fusion':
                 args.train_mode='finetune'

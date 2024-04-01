@@ -44,11 +44,13 @@ class Vision():
         for epoch in range(1,self.epochs+1):
             model.train()
             if self.args.parallel:
+                # model.module.Model.set_train([True, True])
                 if epoch < train_all_epoch:
                     model.module.Model.set_train([False, True])
                 else:
                     model.module.Model.set_train([True, True])
             else:
+                # model.Model.set_train([True, True])
                 if epoch < train_all_epoch:
                     model.Model.set_train([False, True])
                 else:
@@ -60,14 +62,19 @@ class Vision():
             with tqdm(dataloader['train']) as td:
                 for step,batch_data in enumerate(td):
                     optimizer.zero_grad()
-                    vision = batch_data['vision'].clone().detach().to(self.args.device)
-                    labels = batch_data['labels']['M'].clone().detach().to(self.args.device)
+                    vision = batch_data['vision'].clone().detach().to(self.args.device).float()
+                    if self.args.datasetName == 'sims':
+                        labels = batch_data['labels']['V'].clone().detach().to(self.args.device).float()
+                    else:
+                        labels = batch_data['labels']['M'].clone().detach().to(self.args.device).float()
                     mask = batch_data['vision_padding_mask'].clone().detach().to(self.args.device)
                     pred, fea, loss = model(vision=vision, vision_mask=mask,labels = labels.squeeze())
                     y_true.append(labels)
                     y_pred.append(pred)
                     loss = loss.mean()
                     loss.backward()
+                    # torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm)
+
                     optimizer.step()
                     # scheduler.step()
 
@@ -77,7 +84,7 @@ class Vision():
             logger.info("TRAIN-(%s) (%d/%d/%d)>> loss: %.4f " % (self.args.modelName, \
                 epoch-best_epoch, epoch, self.args.cur_time, loss))
             out_pred, true = torch.cat(y_pred), torch.cat(y_true)
-        
+            
             train_results = self.metrics(out_pred, true)
             logger.info('%s: >> ' %('vision') + dict_to_str(train_results))
 
@@ -106,7 +113,10 @@ class Vision():
             with tqdm(dataloader) as td:
                 for batch_data in td:
                     vision = batch_data['vision'].clone().detach().to(self.args.device)
-                    labels = batch_data['labels']['M'].clone().detach().to(self.args.device)
+                    if self.args.datasetName == 'sims':
+                        labels = batch_data['labels']['V'].clone().detach().to(self.args.device)
+                    else:
+                        labels = batch_data['labels']['M'].clone().detach().to(self.args.device)
                     mask = batch_data['vision_padding_mask'].clone().detach().to(self.args.device)
                     pred, fea, loss = model(vision=vision, vision_mask=mask, labels=labels.squeeze())
                     val_loss += loss.mean().item()

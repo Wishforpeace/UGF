@@ -40,21 +40,21 @@ class TVA_Fusion():
             "params": [p for n, p in model.named_parameters() if any(nd in n for nd in no_decay)],
             "weight_decay": 0.0,
         }]
-        optimizer,scheduler = build_optimizer(args=self.args,optimizer_grouped_parameters=optimizer_grouped_parameters,epochs=self.epochs)
-        # if self.args.parallel:
-        #     optimizer =  optim.Adam(model.module.Model.parameters(),lr=self.args.learning_rate,weight_decay=self.args.weight_decay)
-        # else:
-        #     optimizer =  optim.Adam(model.Model.parameters(),lr=self.args.learning_rate)
+        # optimizer,scheduler = build_optimizer(args=self.args,optimizer_grouped_parameters=optimizer_grouped_parameters,epochs=self.epochs)
+        if self.args.parallel:
+            optimizer =  optim.Adam(model.module.Model.parameters(),lr=self.args.learning_rate,weight_decay=self.args.weight_decay)
+        else:
+            optimizer =  optim.Adam(model.Model.parameters(),lr=self.args.learning_rate)
 
         epoch, best_epoch = 0, 0
         save_start_epoch = 1
         loss = 0.0
         train_loss = 0.0
         
-        if self.args.parallel:
-            model.module.Model.load_model(load_pretrain=True)
-        else:
-            model.Model.load_model(load_pretrain=True)
+        # if self.args.parallel:
+        #     model.module.Model.load_model(load_pretrain=True)
+        # else:
+        #     model.Model.load_model(load_pretrain=True)
 
         epoch_score_t = 0.
         epoch_score_a = 0.
@@ -63,11 +63,13 @@ class TVA_Fusion():
         for epoch in range(1,self.epochs+1):
             model.train()
             if self.args.parallel:
+                # model.module.Model.set_train([True, True, True])
                 if epoch < self.finetune_epochs:
                     model.module.Model.set_train([False, True, True])
                 else:
                     model.module.Model.set_train([True, True, True])
             else:
+                # model.Model.set_train([True, True, True])
                 if epoch < self.finetune_epochs:
                     model.Model.set_train([False, True, True])
                 else:
@@ -89,14 +91,21 @@ class TVA_Fusion():
                     labels = batch_data['labels']['M'].clone().detach().to(self.args.device).view(-1)
                     pred_fusion,pred_t,pred_a,pred_v,loss = model(text=text, vision=vision, audio=audio, vision_mask=vision_mask, audio_mask=audio_mask, labels = labels.squeeze())
                     loss = loss.mean()
+
+                    
                     t_difference = torch.tanh(torch.abs(pred_t - labels))
                     t_score = torch.sum(1/(t_difference+self.epsilon))/pred_t.size(0)
+
                     v_difference = torch.tanh(torch.abs(pred_v - labels))
                     v_score = torch.sum(1/(v_difference+self.epsilon))/pred_t.size(0)
+
                     a_difference = torch.tanh(torch.abs(pred_a - labels))
                     a_score = torch.sum(1/(a_difference+self.epsilon))/pred_t.size(0)
                     
-                    
+                    print('💥'*10)
+                    print(f"pred_fusion:{torch.sum(pred_fusion)}\nt_difference:{torch.sum(t_difference)}\nv_difference:{torch.sum(v_difference)}\na_difference:{torch.sum(a_difference)}")
+                    print('🥇'*10)
+                    print(f"[{t_score.item(),v_score.item(),a_score.item()}]")
 
 
                     y_true.append(labels.cpu())
@@ -127,13 +136,13 @@ class TVA_Fusion():
                             model.module.Model.update_scale(coeff_t,coeff_a,coeff_v)
                             grad_max = torch.max(model.module.Model.mono_decoder.MLP[-1].weight.grad)
                             grad_min = torch.min(model.module.Model.mono_decoder.MLP[-1].weight.grad)
-
                         else:
                             model.Model.update_scale(coeff_t,coeff_a,coeff_v)
                             grad_max = torch.max(model.Model.mono_decoder.MLP[-1].weight.grad)
                             grad_min = torch.min(model.Model.mono_decoder.MLP[-1].weight.grad)
-
-                        if grad_max > 1.0 and grad_min < 1.0:
+                            
+                        print(f"grad_max:{grad_max}\ngrad_min:{grad_min}")
+                        if grad_max > 1.0 and grad_min < -1.0:
                             nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
 
 
@@ -141,7 +150,7 @@ class TVA_Fusion():
                     optimizer.step()
 
 
-                    scheduler.step()
+                    # scheduler.step()
                     
            
             
@@ -189,7 +198,7 @@ class TVA_Fusion():
                     audio_mask = batch_data['audio_padding_mask'].clone().detach().to(self.args.device)
                     labels = batch_data['labels']['M'].clone().detach().to(self.args.device).view(-1)
                     pred_fusion,pred_t,pred_a,pred_v,loss = model(text=text, vision=vision, audio=audio, vision_mask=vision_mask, audio_mask=audio_mask, labels = labels.squeeze())
-                    val_loss += loss.mean()
+                    val_loss += loss.item()
                 y_pred.append(pred_fusion)
                 y_true.append(labels)
         val_loss = val_loss / len(dataloader)

@@ -16,6 +16,6 @@ class MultiheadSelfAttentionWithPooling(nn.Module):
         # Transpose back to (batch_size, sequence_length, embed_size)
         attention_output = attention_output.transpose(0, 1)
         # Average pooling across the sequence dimension
-        pooled_output,_ = torch.max(attention_output, dim=1)
+        pooled_output = torch.mean(attention_output, dim=1,keepdim=True)
         return pooled_output
     

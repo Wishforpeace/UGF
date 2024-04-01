@@ -42,7 +42,7 @@ class BertTextEncoder(nn.Module):
                                                 attention_mask=input_mask,
                                                 token_type_ids=segment_ids)
                
-        last_hidden_states = last_hidden_states['pooler_output']
+        
         return last_hidden_states
 
 
@@ -60,8 +60,8 @@ class BertTextEncoderPretrain(nn.Module):
         self.args = args
         self.device = args.device
         drop_out = self.args.post_text_dropout
-        self.encoder = BertTextEncoder()  # bert output 768
-
+        self.encoder = BertTextEncoder(language=args.language)  # bert output 768
+        
         self.proj_fea_dim = args.proj_fea_dim
         self.classifier = BaseClassifier(input_size=self.proj_fea_dim,
                                          hidden_size=[int(self.proj_fea_dim / 2), int(self.proj_fea_dim / 4),
@@ -71,8 +71,8 @@ class BertTextEncoderPretrain(nn.Module):
         
 
     def forward(self, text, label):
-        x = self.encoder(text)
-
+        last_hidden_states = self.encoder(text)
+        x = last_hidden_states[0][:,0,:]
         pred = self.classifier(x)
         loss = self.criterion(pred.squeeze(), label.squeeze())
 

@@ -117,10 +117,11 @@ class ConfigPretrain():
                 'modulation_ends ':50,
                 'lr_scalar':'onecyclewarmup',
                 'optim':'adamw',
-                'learning_rate':1e-5,
+                'learning_rate':1e-6,
                 'weight_decay':1e-3,
                 'lr_decay_step':10,
-                'lr_decay_ratio':0.1
+                'lr_decay_ratio':0.1,
+                'ln_threshold':2e-2
             },
             # dataset
             'datasetParas':{
@@ -142,6 +143,7 @@ class ConfigPretrain():
                     'audio_nhead':8,
                     'audio_tf_num_layers': 2,
                     'proj_fea_dim':768,
+                    'fusion_nhead':8,
                     # post feature
                     'post_fusion_dim': 128,
                     'post_text_dim':128,
@@ -180,30 +182,34 @@ class ConfigPretrain():
                     'post_text_dropout': 0.3,
                     'post_audio_dropout': 0.3,
                     'post_vision_dropout': 0.3,
-                    # res
-                    'H': 3.0
+                  
                 },
                 'sims':{
-                    # the batch_size of each epoch is update_epochs * batch_size
-                    'batch_size': 128,
-                    'epochs':50,
+                    'batch_size': 16,
+                    'text_epochs':50,
+                    'vision_epochs':100,
+                    'audio_epochs':100,
+                    'fusion_epochs':100,
+                    'finetune_epochs':50,
+                    'encoder_fea_dim':768,
                     'text_out': 768, 
                     'audio_out': 16,
                     'vision_out': 32, 
-                    'a_lstm_dropout': 0.0,
-                    'v_lstm_dropout': 0.0,
-                    't_bert_dropout':0.1,
+                    'vision_nhead':8,
+                    'vision_tf_num_layers': 2,
+                    'audio_out': 32, 
+                    'audio_nhead':8,
+                    'audio_tf_num_layers': 2,
+                    'proj_fea_dim':768,
                     # post feature
                     'post_fusion_dim': 128,
                     'post_text_dim':128,
                     'post_audio_dim': 128,
                     'post_vision_dim': 128,
-                    'post_fusion_dropout': 0.1,
-                    'post_text_dropout': 0.1,
-                    'post_audio_dropout': 0.1,
-                    'post_vision_dropout': 0.1,
-                    # res
-                    'H': 1.0
+                    'post_fusion_dropout': 0.3,
+                    'post_text_dropout': 0.3,
+                    'post_audio_dropout': 0.3,
+                    'post_vision_dropout': 0.3,
                 },
             },
         }

@@ -24,7 +24,6 @@ class AudioEncoder(nn.Module):
                                 num_layers=num_layers,
                                 dropout=drop_out,
                                 activation='gelu')
-        self.multiheadPooling = MultiheadSelfAttentionWithPooling(embed_size=encoder_fea_dim,num_heads=nhead)
         self.device = self.args.device
         self.encoder.device = self.device
         self.activation = nn.Tanh()
@@ -37,7 +36,7 @@ class AudioEncoder(nn.Module):
         x = self.encoder(src=audio, has_mask=False, src_key_padding_mask=key_padding_mask)
         x = self.layernorm(x)
         # x = torch.mean(x, dim=-2, keepdim=True)
-        x = self.multiheadPooling(x)
+        
        # 考虑多头注意力池化
         return x
 
@@ -57,11 +56,12 @@ class AudioEncoderPretrain(nn.Module):
         encoder_fea_dim = self.args.encoder_fea_dim
         
         drop_out = self.args.post_audio_dropout
+       
         self.encoder = AudioEncoder(args=self.args,
                                     fea_size=self.args.feature_dims[1],
                                     encoder_fea_dim=self.args.encoder_fea_dim,
                                     nhead=self.args.audio_nhead,
-                                    dim_feedforward=self.args.feature_dims[1],
+                                    dim_feedforward=self.args.encoder_fea_dim,
                                     num_layers=self.args.audio_tf_num_layers,
                                     drop_out=self.args.post_audio_dropout)
         
@@ -70,12 +70,14 @@ class AudioEncoderPretrain(nn.Module):
                                          hidden_size=[int(encoder_fea_dim / 2), int(encoder_fea_dim / 4),
                                                       int(encoder_fea_dim / 8)],
                                          output_size=1, drop_out=drop_out)
+        self.multiheadPooling = MultiheadSelfAttentionWithPooling(embed_size=encoder_fea_dim,num_heads=self.args.audio_nhead)
         
         self.criterion = torch.nn.MSELoss(reduction='none')
 
     def forward(self, audio, label, key_padding_mask):
-        
         x = self.encoder(audio, key_padding_mask)
+        x = self.multiheadPooling(x)
+
         pred = self.classifier(x).squeeze()
         loss = self.criterion(pred.squeeze(), label.squeeze())
         return pred, x, loss
