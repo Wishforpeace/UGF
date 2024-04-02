@@ -100,7 +100,8 @@ def run(args,seed,check):
 
 
 def run_finetune(args):
-    args.res_save_dir = os.path.join(args.res_save_dir, args.train_mode)
+    res_save_dir = os.path.join(args.res_save_dir, args.train_mode)
+    # args.res_save_dir = os.path.join(args.res_save_dir, args.train_mode)
     init_args = args
     model_results = {}
     seeds = args.seeds
@@ -128,7 +129,7 @@ def run_finetune(args):
 
     
     # load other results
-    save_path = os.path.join(args.res_save_dir,
+    save_path = os.path.join(res_save_dir,
                         args.modelName + '-' + args.datasetName + '-' + args.train_mode + '-' + datetime.datetime.now().strftime('%Y-%m-%d-%H%M') +'.csv')
 
     # if not os.path.exists(args.res_save_dir):
@@ -142,7 +143,7 @@ def run_finetune(args):
     rows = []
     # Populate the DataFrame with the new results
     for seed, results in model_results.items():
-        row = {"Model": args.modelName, "Seed": seed}
+        row = {"Model": args.modelName, "Seed": seed, "is_agm":args.is_agm}
         
         row.update(results)
         rows.append(row)
@@ -297,20 +298,21 @@ if __name__ == '__main__':
     #         else:
     #             run_pretrain(args)
                 # run_mono_modal(args)
-    args.seeds = [1111,1112,1113,1114]
+    args.seeds = [1114]
     # args.seeds = [1234]
-    args.is_concat,args.is_ulgm,args.is_almt,args.is_agm = [False,False,False,True]
-    for data_name in ['mosei']:
-        args.datasetName = data_name
-        for i in ['text','audio','vision']:
-        # for i in ['fusion']:
-            args.modelName = i
-            if i == 'fusion':
-                args.train_mode='finetune'
-                run_finetune(args)
-            else:
-                args.train_mode='pretrain'
-                run_pretrain(args)
+    for j in [True,False]:
+        args.is_agm = j
+        for data_name in ['mosei']:
+            args.datasetName = data_name
+            # for i in ['text','audio','vision']:
+            for i in ['fusion']:
+                args.modelName = i
+                if i == 'fusion':
+                    args.train_mode='finetune'
+                    run_finetune(args)
+                else:
+                    args.train_mode='pretrain'
+                    run_pretrain(args)
 
 
 

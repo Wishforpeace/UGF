@@ -117,7 +117,7 @@ class ConfigPretrain():
                 'modulation_ends ':50,
                 'lr_scalar':'onecyclewarmup',
                 'optim':'adamw',
-                'learning_rate':1e-6,
+                'learning_rate':1e-4,
                 'weight_decay':1e-3,
                 'lr_decay_step':10,
                 'lr_decay_ratio':0.1,
@@ -173,6 +173,7 @@ class ConfigPretrain():
                     'audio_nhead':8,
                     'audio_tf_num_layers': 2,
                     'proj_fea_dim':768,
+                    'fusion_nhead':8,
                     # post feature
                     'post_fusion_dim': 128,
                     'post_text_dim':128,

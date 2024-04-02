@@ -40,21 +40,21 @@ class TVA_Fusion():
             "params": [p for n, p in model.named_parameters() if any(nd in n for nd in no_decay)],
             "weight_decay": 0.0,
         }]
-        # optimizer,scheduler = build_optimizer(args=self.args,optimizer_grouped_parameters=optimizer_grouped_parameters,epochs=self.epochs)
-        if self.args.parallel:
-            optimizer =  optim.Adam(model.module.Model.parameters(),lr=self.args.learning_rate,weight_decay=self.args.weight_decay)
-        else:
-            optimizer =  optim.Adam(model.Model.parameters(),lr=self.args.learning_rate)
+        optimizer,scheduler = build_optimizer(args=self.args,optimizer_grouped_parameters=optimizer_grouped_parameters,epochs=self.epochs)
+        # if self.args.parallel:
+        #     optimizer =  optim.Adam(model.module.Model.parameters(),lr=self.args.learning_rate,weight_decay=self.args.weight_decay)
+        # else:
+        #     optimizer =  optim.Adam(model.Model.parameters(),lr=self.args.learning_rate)
 
         epoch, best_epoch = 0, 0
         save_start_epoch = 1
         loss = 0.0
         train_loss = 0.0
         
-        # if self.args.parallel:
-        #     model.module.Model.load_model(load_pretrain=True)
-        # else:
-        #     model.Model.load_model(load_pretrain=True)
+        if self.args.parallel:
+            model.module.Model.load_model(load_pretrain=True)
+        else:
+            model.Model.load_model(load_pretrain=True)
 
         epoch_score_t = 0.
         epoch_score_a = 0.
@@ -102,10 +102,10 @@ class TVA_Fusion():
                     a_difference = torch.tanh(torch.abs(pred_a - labels))
                     a_score = torch.sum(1/(a_difference+self.epsilon))/pred_t.size(0)
                     
-                    print('💥'*10)
-                    print(f"pred_fusion:{torch.sum(pred_fusion)}\nt_difference:{torch.sum(t_difference)}\nv_difference:{torch.sum(v_difference)}\na_difference:{torch.sum(a_difference)}")
-                    print('🥇'*10)
-                    print(f"[{t_score.item(),v_score.item(),a_score.item()}]")
+                    # print('💥'*10)
+                    # print(f"pred_fusion:{torch.sum(pred_fusion)}\nt_difference:{torch.sum(t_difference)}\nv_difference:{torch.sum(v_difference)}\na_difference:{torch.sum(a_difference)}")
+                    # print('🥇'*10)
+                    # print(f"[{t_score.item(),v_score.item(),a_score.item()}]")
 
 
                     y_true.append(labels.cpu())
@@ -141,7 +141,7 @@ class TVA_Fusion():
                             grad_max = torch.max(model.Model.mono_decoder.MLP[-1].weight.grad)
                             grad_min = torch.min(model.Model.mono_decoder.MLP[-1].weight.grad)
                             
-                        print(f"grad_max:{grad_max}\ngrad_min:{grad_min}")
+                        # print(f"grad_max:{grad_max}\ngrad_min:{grad_min}")
                         if grad_max > 1.0 and grad_min < -1.0:
                             nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
 
@@ -150,7 +150,7 @@ class TVA_Fusion():
                     optimizer.step()
 
 
-                    # scheduler.step()
+                    scheduler.step()
                     
            
             
