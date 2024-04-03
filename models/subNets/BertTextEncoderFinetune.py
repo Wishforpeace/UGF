@@ -67,17 +67,13 @@ class BertTextEncoderPretrain(nn.Module):
                                          hidden_size=[int(self.proj_fea_dim / 2), int(self.proj_fea_dim / 4),
                                                       int(self.proj_fea_dim / 8)],
                                          output_size=1, drop_out=drop_out)
-        self.criterion = torch.nn.MSELoss(reduction='none')
-        
-
+       
     def forward(self, text, label):
         last_hidden_states = self.encoder(text)
         x = last_hidden_states[0][:,0,:]
         pred = self.classifier(x)
-        loss = self.criterion(pred.squeeze(), label.squeeze())
-
        
-        return pred, x, loss
+        return pred, x
 
     def save_model(self):
         # save all modules

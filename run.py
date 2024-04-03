@@ -16,11 +16,17 @@ from models.AMIO import AMIO
 from trains.ATIO import ATIO
 from data.load_data import MMDataLoader
 from config.config import ConfigPretrain
-
+import torch.distributed as dist
+from torch.nn.parallel import DistributedDataParallel as DDP
 
 
 os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"
 
+def setup(rank, world_size):
+    os.environ['MASTER_ADDR'] = 'localhost'
+    os.environ['MASTER_PORT'] = '12355'
+    dist.init_process_group("nccl", rank=rank, world_size=world_size)
+    
 def setup_seed(seed):
     torch.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)
@@ -107,7 +113,8 @@ def run_finetune(args):
     seeds = args.seeds
     # run results
     for i, seed in enumerate(seeds):
-        check = {'Loss': 10000, 'MAE': 100}
+        # check = {'Loss': 10000, 'MAE': 100,'Mult_acc_7':0}
+        check = {'MAE': 100}
         args = init_args
         # load config
         if args.train_mode == "finetune":
@@ -202,7 +209,7 @@ def run_pretrain(args):
     rows = []
     # Populate the DataFrame with the new results
     for seed, results in model_results.items():
-        row = {"Model": args.modelName, "Seed": seed}
+        row = {"Model": args.modelName, "Seed": seed,"is_agm":args.is_agm}
         
         row.update(results)
         rows.append(row)
@@ -259,16 +266,17 @@ def parse_args():
                         help='support mosi/mosei/sims')
     parser.add_argument('--num_workers', type=int, default=0,
                         help='num workers of loading data')
-    parser.add_argument('--model_save_dir', type=str, default='/mnt/disk1/wyx/MSA/Lab/ModalAdaptationMSA/results/models',
+    parser.add_argument('--model_save_dir', type=str, default='results/models',
                         help='path to save results.')
-    parser.add_argument('--res_save_dir', type=str, default='/mnt/disk1/wyx/MSA/Lab/ModalAdaptationMSA/results/results',
+    parser.add_argument('--res_save_dir', type=str, default='results/results',
                         help='path to save results.')
-    parser.add_argument('--gpu_ids', type=list, default=[1],
+    parser.add_argument('--gpu_ids', type=list, default=[2,3],
                         help='indicates the gpus will be used. If none, the most-free gpu will be used!')
     return parser.parse_args()
 
 if __name__ == '__main__':
     start_time = time.time()
+    world_size = torch.cuda.device_count()
     args = parse_args()
     logger = set_log(args)
     # for data_name in ['mosi', 'mosei','sims']:
@@ -298,13 +306,13 @@ if __name__ == '__main__':
     #         else:
     #             run_pretrain(args)
                 # run_mono_modal(args)
-    args.seeds = [1114]
+    args.seeds = [1111,1112,1113,1114]
     # args.seeds = [1234]
-    for j in [True,False]:
+    for j in [False]:
         args.is_agm = j
-        for data_name in ['mosei']:
+        for data_name in ['sims']:
             args.datasetName = data_name
-            # for i in ['text','audio','vision']:
+            # for i in ['text','audio','vision','fusion']:
             for i in ['fusion']:
                 args.modelName = i
                 if i == 'fusion':

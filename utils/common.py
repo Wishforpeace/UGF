@@ -27,12 +27,12 @@ def check_and_save(model, result, check, save_model=True, parallel=False):
                     else:
                         model.save_model()
                 check[key] = result[key]
-        else:
-            if check[key] < result[key]:
-                if save_model:
-                    if parallel:
-                        model.module.save_model()
-                    else:
-                        model.save_model()
-                check[key] = result[key]
+        # else:
+        #     if check[key] < result[key]:
+        #         if save_model:
+        #             if parallel:
+        #                 model.module.save_model()
+        #             else:
+        #                 model.save_model()
+        #         check[key] = result[key]
     return check

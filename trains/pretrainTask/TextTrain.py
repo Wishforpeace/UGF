@@ -42,6 +42,7 @@ class Text():
         train_all_epoch = int(self.epochs / 3)
         loss = 0.0
         train_loss = 0.0
+        criterion = nn.MSELoss(reduction='none')
         for epoch in range(1,self.epochs+1):
             model.train()
             if self.args.parallel:
@@ -65,8 +66,9 @@ class Text():
                     optimizer.zero_grad()
                     text = batch_data['text'].clone().detach().to(self.args.device)
                     labels = batch_data['labels']['M'].clone().detach().to(self.args.device).view(-1)
-                    pred, fea, loss = model(text = text, labels = labels.squeeze())
-                    loss = loss.mean()
+                    pred, fea = model(text = text, labels = labels.squeeze())
+                    loss = torch.mean(criterion(pred.squeeze(), labels.squeeze()))
+                   
                     y_true.append(labels.cpu())
                     y_pred.append(pred.cpu())
                     loss.backward()
@@ -101,7 +103,7 @@ class Text():
                model.module.load_model(module='all')
             else:   
                 model.load_model(module='all')
-            
+        criterion = nn.MSELoss(reduction='none')
         with torch.no_grad():
             val_loss = 0.0
             y_pred =[]
@@ -110,7 +112,8 @@ class Text():
                 for batch_data in td:
                     text = batch_data['text'].clone().detach().to(self.args.device)
                     labels = batch_data['labels']['M'].clone().detach().to(self.args.device)
-                    pred, fea, loss = model(text=text, labels=labels.squeeze())
+                    pred, fea = model(text=text, labels=labels.squeeze())
+                    loss = torch.mean(criterion(pred.squeeze(), labels.squeeze()))
                     val_loss += loss.mean().item()
                 y_pred.append(pred)
                 y_true.append(labels)

@@ -41,6 +41,7 @@ class Vision():
         train_all_epoch = int(self.epochs / 3)
         loss = 0.0
         train_loss = 0.0
+        criterion = nn.MSELoss(reduction='none')
         for epoch in range(1,self.epochs+1):
             model.train()
             if self.args.parallel:
@@ -68,10 +69,11 @@ class Vision():
                     else:
                         labels = batch_data['labels']['M'].clone().detach().to(self.args.device).float()
                     mask = batch_data['vision_padding_mask'].clone().detach().to(self.args.device)
-                    pred, fea, loss = model(vision=vision, vision_mask=mask,labels = labels.squeeze())
+                    pred, fea = model(vision=vision, vision_mask=mask,labels = labels.squeeze())
+                    loss = torch.mean(criterion(pred.squeeze(), labels.squeeze()))
                     y_true.append(labels)
                     y_pred.append(pred)
-                    loss = loss.mean()
+                    
                     loss.backward()
                     # torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm)
 
@@ -105,7 +107,7 @@ class Vision():
                model.module.load_model(module='all')
             else:   
                 model.load_model(module='all')
-            
+        criterion = nn.MSELoss(reduction='none')
         with torch.no_grad():
             val_loss = 0.0
             y_pred =[]
@@ -118,7 +120,8 @@ class Vision():
                     else:
                         labels = batch_data['labels']['M'].clone().detach().to(self.args.device)
                     mask = batch_data['vision_padding_mask'].clone().detach().to(self.args.device)
-                    pred, fea, loss = model(vision=vision, vision_mask=mask, labels=labels.squeeze())
+                    pred, fea = model(vision=vision, vision_mask=mask, labels=labels.squeeze())
+                    loss = torch.mean(criterion(pred.squeeze(), labels.squeeze()))
                     val_loss += loss.mean().item()
                 y_pred.append(pred)
                 y_true.append(labels)

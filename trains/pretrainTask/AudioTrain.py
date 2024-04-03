@@ -42,6 +42,7 @@ class Audio():
         train_all_epoch = int(self.epochs / 3)
         loss = 0.0
         train_loss = 0.0
+        criterion = nn.MSELoss(reduction='none')
         for epoch in range(1,self.epochs+1):
             model.train()
             if self.args.parallel:
@@ -70,7 +71,8 @@ class Audio():
                     else:
                         labels = batch_data['labels']['M'].clone().detach().to(self.args.device)
                     mask = batch_data['audio_padding_mask'].clone().detach().to(self.args.device)
-                    pred, fea, loss = model(audio=audio, audio_mask=mask,labels = labels.squeeze())
+                    pred, fea = model(audio=audio, audio_mask=mask,labels = labels.squeeze())
+                    loss = torch.mean(criterion(pred.squeeze(), labels.squeeze()))
                     y_true.append(labels)
                     y_pred.append(pred)
                     loss = loss.mean()
@@ -104,7 +106,7 @@ class Audio():
                model.module.load_model(module='all')
             else:   
                 model.load_model(module='all')
-            
+        criterion = nn.MSELoss(reduction='none')
         with torch.no_grad():
             val_loss = 0.0
             y_pred =[]
@@ -117,7 +119,8 @@ class Audio():
                     else:
                         labels = batch_data['labels']['M'].clone().detach().to(self.args.device)
                     mask = batch_data['audio_padding_mask'].clone().detach().to(self.args.device)
-                    pred, fea, loss = model(audio=audio, audio_mask=mask, labels=labels.squeeze())
+                    pred, fea= model(audio=audio, audio_mask=mask, labels=labels.squeeze())
+                    loss = torch.mean(criterion(pred.squeeze(), labels.squeeze()))
                     val_loss += loss.mean().item()
                 y_pred.append(pred)
                 y_true.append(labels)

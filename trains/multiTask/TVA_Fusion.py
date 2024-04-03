@@ -20,6 +20,7 @@ from utils.metricsTop import MetricsTop
 from utils.scheduler import build_optimizer
 from utils.common import check_and_save
 from transformers import get_linear_schedule_with_warmup
+from models.loss import BMCLoss
 logger = logging.getLogger('MSA')
 
 class TVA_Fusion():
@@ -30,6 +31,7 @@ class TVA_Fusion():
         self.metrics = MetricsTop(args.train_mode).getMetics(args.datasetName)
 
     def do_train(self,model,dataloader,check,load_pretrain=True):
+
         no_decay = ["bias", "LayerNorm.weight"]
         optimizer_grouped_parameters = [
         {
@@ -40,6 +42,7 @@ class TVA_Fusion():
             "params": [p for n, p in model.named_parameters() if any(nd in n for nd in no_decay)],
             "weight_decay": 0.0,
         }]
+
         optimizer,scheduler = build_optimizer(args=self.args,optimizer_grouped_parameters=optimizer_grouped_parameters,epochs=self.epochs)
         # if self.args.parallel:
         #     optimizer =  optim.Adam(model.module.Model.parameters(),lr=self.args.learning_rate,weight_decay=self.args.weight_decay)
@@ -59,6 +62,8 @@ class TVA_Fusion():
         epoch_score_t = 0.
         epoch_score_a = 0.
         epoch_score_v = 0.
+        # criterion = nn.MSELoss(reduction='none')
+        criterion = BMCLoss(init_noise_sigma=self.args.init_noise_sigma,device=self.args.device)
         self.epsilon = self.args.epsilon
         for epoch in range(1,self.epochs+1):
             model.train()
@@ -78,6 +83,7 @@ class TVA_Fusion():
             logger.info("TRAIN-(%s) epoch(%d)" % (self.args.modelName, epoch))
             y_pred =[]
             y_true =[]
+           
             with tqdm(dataloader['train']) as td:
                 for step,batch_data in enumerate(td):
                     step = step+1
@@ -88,11 +94,15 @@ class TVA_Fusion():
                     vision_mask = batch_data['vision_padding_mask'].clone().detach().to(self.args.device)
                     audio = batch_data['audio'].clone().detach().to(self.args.device)
                     audio_mask = batch_data['audio_padding_mask'].clone().detach().to(self.args.device)
-                    labels = batch_data['labels']['M'].clone().detach().to(self.args.device).view(-1)
-                    pred_fusion,pred_t,pred_a,pred_v,loss = model(text=text, vision=vision, audio=audio, vision_mask=vision_mask, audio_mask=audio_mask, labels = labels.squeeze())
-                    loss = loss.mean()
+                    labels = batch_data['labels']['M'].clone().detach().to(self.args.device)
+                    pred_fusion,pred_t,pred_a,pred_v = model(text=text, vision=vision, audio=audio, vision_mask=vision_mask, audio_mask=audio_mask, labels = labels)
+                    pred_loss = criterion(pred_fusion, labels)
+                    loss_t = criterion(pred_t, labels)
+                    loss_a = criterion(pred_a, labels)
+                    loss_v = criterion(pred_v, labels)
+                    mono_loss = loss_t + loss_a + loss_v
+                    loss = torch.mean(pred_loss + 0.1 * mono_loss)
 
-                    
                     t_difference = torch.tanh(torch.abs(pred_t - labels))
                     t_score = torch.sum(1/(t_difference+self.epsilon))/pred_t.size(0)
 
@@ -102,10 +112,7 @@ class TVA_Fusion():
                     a_difference = torch.tanh(torch.abs(pred_a - labels))
                     a_score = torch.sum(1/(a_difference+self.epsilon))/pred_t.size(0)
                     
-                    # print('💥'*10)
-                    # print(f"pred_fusion:{torch.sum(pred_fusion)}\nt_difference:{torch.sum(t_difference)}\nv_difference:{torch.sum(v_difference)}\na_difference:{torch.sum(a_difference)}")
-                    # print('🥇'*10)
-                    # print(f"[{t_score.item(),v_score.item(),a_score.item()}]")
+                  
 
 
                     y_true.append(labels.cpu())
@@ -118,9 +125,9 @@ class TVA_Fusion():
                         ratio_v = math.exp((2*v_score-t_score-a_score)/2)
 
                         
-                        optimal_ratio_t = math.exp(2*epoch_score_t-epoch_score_a-epoch_score_v)
-                        optimal_ratio_a = math.exp(2*epoch_score_a-epoch_score_t-epoch_score_v)
-                        optimal_ratio_v = math.exp(2*epoch_score_v-epoch_score_a-epoch_score_t)
+                        optimal_ratio_t = math.exp((2*epoch_score_t-epoch_score_a-epoch_score_v)/2)
+                        optimal_ratio_a = math.exp((2*epoch_score_a-epoch_score_t-epoch_score_v)/2)
+                        optimal_ratio_v = math.exp((2*epoch_score_v-epoch_score_a-epoch_score_t)/2)
 
 
                         coeff_t = math.exp(self.args.alpha*(optimal_ratio_t - ratio_t))
@@ -184,7 +191,8 @@ class TVA_Fusion():
                model.module.load_model(module='all')
             else:   
                 model.load_model(module='all')
-            
+        # criterion = nn.MSELoss(reduction='none')
+        criterion = BMCLoss(init_noise_sigma=self.args.init_noise_sigma,device=self.args.device)
         with torch.no_grad():
             val_loss = 0.0
             y_pred =[]
@@ -196,8 +204,14 @@ class TVA_Fusion():
                     vision_mask = batch_data['vision_padding_mask'].clone().detach().to(self.args.device)
                     audio = batch_data['audio'].clone().detach().to(self.args.device)
                     audio_mask = batch_data['audio_padding_mask'].clone().detach().to(self.args.device)
-                    labels = batch_data['labels']['M'].clone().detach().to(self.args.device).view(-1)
-                    pred_fusion,pred_t,pred_a,pred_v,loss = model(text=text, vision=vision, audio=audio, vision_mask=vision_mask, audio_mask=audio_mask, labels = labels.squeeze())
+                    labels = batch_data['labels']['M'].clone().detach().to(self.args.device)
+                    pred_fusion,pred_t,pred_a,pred_v = model(text=text, vision=vision, audio=audio, vision_mask=vision_mask, audio_mask=audio_mask, labels = labels)
+                    pred_loss = criterion(pred_fusion, labels)
+                    loss_t = criterion(pred_t, labels)
+                    loss_a = criterion(pred_a, labels)
+                    loss_v = criterion(pred_v, labels)
+                    mono_loss = loss_t + loss_a + loss_v
+                    loss = torch.mean(pred_loss + 0.1 * mono_loss)
                     val_loss += loss.item()
                 y_pred.append(pred_fusion)
                 y_true.append(labels)
