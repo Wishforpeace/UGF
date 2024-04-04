@@ -40,11 +40,11 @@ class TVA_Fusion():
             "params": [p for n, p in model.named_parameters() if any(nd in n for nd in no_decay)],
             "weight_decay": 0.0,
         }]
-        optimizer,scheduler = build_optimizer(args=self.args,optimizer_grouped_parameters=optimizer_grouped_parameters,epochs=self.epochs)
-        # if self.args.parallel:
-        #     optimizer =  optim.Adam(model.module.Model.parameters(),lr=self.args.learning_rate,weight_decay=self.args.weight_decay)
-        # else:
-        #     optimizer =  optim.Adam(model.Model.parameters(),lr=self.args.learning_rate)
+        # optimizer,scheduler = build_optimizer(args=self.args,optimizer_grouped_parameters=optimizer_grouped_parameters,epochs=self.epochs)
+        if self.args.parallel:
+            optimizer =  optim.Adam(model.module.Model.parameters(),lr=self.args.learning_rate,weight_decay=self.args.weight_decay)
+        else:
+            optimizer =  optim.Adam(model.Model.parameters(),lr=self.args.learning_rate)
 
         epoch, best_epoch = 0, 0
         save_start_epoch = 1
@@ -52,9 +52,9 @@ class TVA_Fusion():
         train_loss = 0.0
         
         if self.args.parallel:
-            model.module.Model.load_model(load_pretrain=True)
+            model.module.Model.load_model(load_pretrain=False)
         else:
-            model.Model.load_model(load_pretrain=True)
+            model.Model.load_model(load_pretrain=False)
 
         epoch_score_t = 0.
         epoch_score_a = 0.

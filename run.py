@@ -107,7 +107,8 @@ def run_finetune(args):
     seeds = args.seeds
     # run results
     for i, seed in enumerate(seeds):
-        check = {'Loss': 10000, 'MAE': 100}
+        # check = {'Loss': 10000, 'MAE': 100}
+        check = {'Mult_acc_7':0.0}
         args = init_args
         # load config
         if args.train_mode == "finetune":
@@ -298,11 +299,12 @@ if __name__ == '__main__':
     #         else:
     #             run_pretrain(args)
                 # run_mono_modal(args)
-    args.seeds = [1114]
+    args.seeds = [1111,1112,1113]
     # args.seeds = [1234]
-    for j in [True,False]:
-        args.is_agm = j
-        for data_name in ['mosei']:
+    
+    for data_name in ['mosei']:
+        for j in [True,False]:
+            args.is_agm = j
             args.datasetName = data_name
             # for i in ['text','audio','vision']:
             for i in ['fusion']:

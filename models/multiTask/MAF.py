@@ -180,11 +180,11 @@ class MAF(nn.Module):
             x_v_embed = self.m_v_o(x_v_embed)
             x_a_embed = self.m_a_o(x_a_embed)
 
-        dropout_rate = F.softmax(1-torch.tensor([self.scale_t, self.scale_v, self.scale_a]), dim=0)
-        
-        x_t_embed = F.dropout(x_t_embed, p=dropout_rate[0].item(), training=self.training)
-        x_v_embed = F.dropout(x_t_embed, p=dropout_rate[1].item(), training=self.training)
-        x_a_embed = F.dropout(x_t_embed, p=dropout_rate[2].item(), training=self.training)
+            dropout_rate = F.softmax(1-torch.tensor([self.scale_t, self.scale_v, self.scale_a]), dim=0)
+            
+            x_t_embed = F.dropout(x_t_embed, p=dropout_rate[0].item(), training=self.training)
+            x_v_embed = F.dropout(x_t_embed, p=dropout_rate[1].item(), training=self.training)
+            x_a_embed = F.dropout(x_t_embed, p=dropout_rate[2].item(), training=self.training)
 
 
         pred_t = self.mono_decoder(x_t_embed).squeeze()
@@ -213,8 +213,8 @@ class MAF(nn.Module):
 
 
         mono_loss = loss_t + loss_a + loss_v
-        loss = pred_loss + mono_loss
-       
+        loss = pred_loss + 0.1*mono_loss
+        # loss = pred_loss
 
 
 
