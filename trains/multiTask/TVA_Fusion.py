@@ -20,6 +20,7 @@ from utils.metricsTop import MetricsTop
 from utils.scheduler import build_optimizer
 from utils.common import check_and_save
 from transformers import get_linear_schedule_with_warmup
+from models.loss import BMCLoss
 logger = logging.getLogger('MSA')
 
 class TVA_Fusion():
@@ -30,6 +31,7 @@ class TVA_Fusion():
         self.metrics = MetricsTop(args.train_mode).getMetics(args.datasetName)
 
     def do_train(self,model,dataloader,check,load_pretrain=True):
+
         no_decay = ["bias", "LayerNorm.weight"]
         optimizer_grouped_parameters = [
         {
@@ -40,11 +42,11 @@ class TVA_Fusion():
             "params": [p for n, p in model.named_parameters() if any(nd in n for nd in no_decay)],
             "weight_decay": 0.0,
         }]
-        # optimizer,scheduler = build_optimizer(args=self.args,optimizer_grouped_parameters=optimizer_grouped_parameters,epochs=self.epochs)
-        if self.args.parallel:
-            optimizer =  optim.Adam(model.module.Model.parameters(),lr=self.args.learning_rate,weight_decay=self.args.weight_decay)
-        else:
-            optimizer =  optim.Adam(model.Model.parameters(),lr=self.args.learning_rate)
+        optimizer,scheduler = build_optimizer(args=self.args,optimizer_grouped_parameters=optimizer_grouped_parameters,epochs=self.epochs)
+        # if self.args.parallel:
+        #     optimizer =  optim.Adam(model.module.Model.parameters(),lr=self.args.learning_rate,weight_decay=self.args.weight_decay)
+        # else:
+        #     optimizer =  optim.Adam(model.Model.parameters(),lr=self.args.learning_rate)
 
         epoch, best_epoch = 0, 0
         save_start_epoch = 1
@@ -52,13 +54,15 @@ class TVA_Fusion():
         train_loss = 0.0
         
         if self.args.parallel:
-            model.module.Model.load_model(load_pretrain=False)
+            model.module.Model.load_model(load_pretrain=True)
         else:
-            model.Model.load_model(load_pretrain=False)
+            model.Model.load_model(load_pretrain=True)
 
         epoch_score_t = 0.
         epoch_score_a = 0.
         epoch_score_v = 0.
+        # criterion = nn.MSELoss(reduction='none')
+        criterion = BMCLoss(init_noise_sigma=self.args.init_noise_sigma,device=self.args.device)
         self.epsilon = self.args.epsilon
         for epoch in range(1,self.epochs+1):
             model.train()
@@ -78,6 +82,7 @@ class TVA_Fusion():
             logger.info("TRAIN-(%s) epoch(%d)" % (self.args.modelName, epoch))
             y_pred =[]
             y_true =[]
+           
             with tqdm(dataloader['train']) as td:
                 for step,batch_data in enumerate(td):
                     step = step+1
@@ -88,11 +93,15 @@ class TVA_Fusion():
                     vision_mask = batch_data['vision_padding_mask'].clone().detach().to(self.args.device)
                     audio = batch_data['audio'].clone().detach().to(self.args.device)
                     audio_mask = batch_data['audio_padding_mask'].clone().detach().to(self.args.device)
-                    labels = batch_data['labels']['M'].clone().detach().to(self.args.device).view(-1)
-                    pred_fusion,pred_t,pred_a,pred_v,loss = model(text=text, vision=vision, audio=audio, vision_mask=vision_mask, audio_mask=audio_mask, labels = labels.squeeze())
-                    loss = loss.mean()
+                    labels = batch_data['labels']['M'].clone().detach().to(self.args.device)
+                    pred_fusion,pred_t,pred_a,pred_v = model(text=text, vision=vision, audio=audio, vision_mask=vision_mask, audio_mask=audio_mask, labels = labels)
+                    pred_loss = criterion(pred_fusion, labels)
+                    loss_t = criterion(pred_t, labels)
+                    loss_a = criterion(pred_a, labels)
+                    loss_v = criterion(pred_v, labels)
+                    mono_loss = loss_t + loss_a + loss_v
+                    loss = torch.mean(pred_loss +  mono_loss)
 
-                    
                     t_difference = torch.tanh(torch.abs(pred_t - labels))
                     t_score = torch.sum(1/(t_difference+self.epsilon))/pred_t.size(0)
 
@@ -102,10 +111,7 @@ class TVA_Fusion():
                     a_difference = torch.tanh(torch.abs(pred_a - labels))
                     a_score = torch.sum(1/(a_difference+self.epsilon))/pred_t.size(0)
                     
-                    # print('💥'*10)
-                    # print(f"pred_fusion:{torch.sum(pred_fusion)}\nt_difference:{torch.sum(t_difference)}\nv_difference:{torch.sum(v_difference)}\na_difference:{torch.sum(a_difference)}")
-                    # print('🥇'*10)
-                    # print(f"[{t_score.item(),v_score.item(),a_score.item()}]")
+                  
 
 
                     y_true.append(labels.cpu())
@@ -118,9 +124,9 @@ class TVA_Fusion():
                         ratio_v = math.exp((2*v_score-t_score-a_score)/2)
 
                         
-                        optimal_ratio_t = math.exp(2*epoch_score_t-epoch_score_a-epoch_score_v)
-                        optimal_ratio_a = math.exp(2*epoch_score_a-epoch_score_t-epoch_score_v)
-                        optimal_ratio_v = math.exp(2*epoch_score_v-epoch_score_a-epoch_score_t)
+                        optimal_ratio_t = math.exp((2*epoch_score_t-epoch_score_a-epoch_score_v)/2)
+                        optimal_ratio_a = math.exp((2*epoch_score_a-epoch_score_t-epoch_score_v)/2)
+                        optimal_ratio_v = math.exp((2*epoch_score_v-epoch_score_a-epoch_score_t)/2)
 
 
                         coeff_t = math.exp(self.args.alpha*(optimal_ratio_t - ratio_t))
@@ -134,13 +140,28 @@ class TVA_Fusion():
                         epoch_score_v = epoch_score_v * (iteration - 1) / iteration + v_score / iteration
                         if self.args.parallel:
                             model.module.Model.update_scale(coeff_t,coeff_a,coeff_v)
-                            grad_max = torch.max(model.module.Model.mono_decoder.MLP[-1].weight.grad)
-                            grad_min = torch.min(model.module.Model.mono_decoder.MLP[-1].weight.grad)
+
+                            grad_max_t = torch.max(model.module.Model.t_mono_decoder.MLP[-1].weight.grad)
+                            grad_min_t = torch.min(model.module.Model.t_mono_decoder.MLP[-1].weight.grad)
+                            grad_max_v = torch.max(model.module.Model.v_mono_decoder.MLP[-1].weight.grad)
+                            grad_min_v = torch.min(model.module.Model.v_mono_decoder.MLP[-1].weight.grad)
+                            grad_max_a = torch.max(model.module.Model.a_mono_decoder.MLP[-1].weight.grad)
+                            grad_min_a = torch.min(model.module.Model.a_mono_decoder.MLP[-1].weight.grad)
+                            grad_max = max(grad_max_t,grad_max_v,grad_max_a)
+                            grad_min = min(grad_min_t,grad_min_v,grad_min_a)
+
                         else:
                             model.Model.update_scale(coeff_t,coeff_a,coeff_v)
-                            grad_max = torch.max(model.Model.mono_decoder.MLP[-1].weight.grad)
-                            grad_min = torch.min(model.Model.mono_decoder.MLP[-1].weight.grad)
                             
+                            grad_max_t = torch.max(model.Model.t_mono_decoder.MLP[-1].weight.grad)
+                            grad_min_t = torch.min(model.Model.t_mono_decoder.MLP[-1].weight.grad)
+                            grad_max_v = torch.max(model.Model.v_mono_decoder.MLP[-1].weight.grad)
+                            grad_min_v = torch.min(model.Model.v_mono_decoder.MLP[-1].weight.grad)
+                            grad_max_a = torch.max(model.Model.a_mono_decoder.MLP[-1].weight.grad)
+                            grad_min_a = torch.min(model.Model.a_mono_decoder.MLP[-1].weight.grad)
+                            grad_max = max(grad_max_t,grad_max_v,grad_max_a)
+                            grad_min = min(grad_min_t,grad_min_v,grad_min_a)
+
                         # print(f"grad_max:{grad_max}\ngrad_min:{grad_min}")
                         if grad_max > 1.0 and grad_min < -1.0:
                             nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
@@ -184,7 +205,8 @@ class TVA_Fusion():
                model.module.load_model(module='all')
             else:   
                 model.load_model(module='all')
-            
+        # criterion = nn.MSELoss(reduction='none')
+        criterion = BMCLoss(init_noise_sigma=self.args.init_noise_sigma,device=self.args.device)
         with torch.no_grad():
             val_loss = 0.0
             y_pred =[]
@@ -196,11 +218,17 @@ class TVA_Fusion():
                     vision_mask = batch_data['vision_padding_mask'].clone().detach().to(self.args.device)
                     audio = batch_data['audio'].clone().detach().to(self.args.device)
                     audio_mask = batch_data['audio_padding_mask'].clone().detach().to(self.args.device)
-                    labels = batch_data['labels']['M'].clone().detach().to(self.args.device).view(-1)
-                    pred_fusion,pred_t,pred_a,pred_v,loss = model(text=text, vision=vision, audio=audio, vision_mask=vision_mask, audio_mask=audio_mask, labels = labels.squeeze())
+                    labels = batch_data['labels']['M'].clone().detach().to(self.args.device)
+                    pred_fusion,pred_t,pred_a,pred_v = model(text=text, vision=vision, audio=audio, vision_mask=vision_mask, audio_mask=audio_mask, labels = labels)
+                    pred_loss = criterion(pred_fusion, labels)
+                    loss_t = criterion(pred_t, labels)
+                    loss_a = criterion(pred_a, labels)
+                    loss_v = criterion(pred_v, labels)
+                    mono_loss = loss_t + loss_a + loss_v
+                    loss = torch.mean(pred_loss + 0.1 * mono_loss)
                     val_loss += loss.item()
-                y_pred.append(pred_fusion)
-                y_true.append(labels)
+                    y_pred.append(pred_fusion)
+                    y_true.append(labels)
         val_loss = val_loss / len(dataloader)
         logger.info(mode+"-(%s)" % self.args.modelName + " >> loss: %.4f " % val_loss)
         out_pred, true = torch.cat(y_pred), torch.cat(y_true)

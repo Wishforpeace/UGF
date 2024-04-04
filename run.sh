@@ -1,3 +1,3 @@
-# nohup python run.py  --modelName self_mm --datasetName mosi  > mosi.log 2>&1 &
-# nohup python run.py  --modelName self_mm --datasetName mosei > without_agm.log 2>&1 &
-nohup python run.py  > mosei.log 2>&1 &
+# nohup python run.py  --datasetName mosi > mosi.log 2>&1 &
+# nohup python run.py  --datasetName sims > sims-tva.log 2>&1 &
+nohup python run.py  --datasetName mosei > mosei-audio.log 2>&1 &

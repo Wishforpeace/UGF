@@ -17,8 +17,7 @@ from models.subNets.AudioEncoderFinetune import AudioEncoder
 from models.subNets.BertTextEncoderFinetune import BertTextEncoder
 from models.FusionTransformer.transformer import LayerFusionTransformer
 from models.subNets.pooling import MultiheadSelfAttentionWithPooling
-
-
+from models.loss.bmc_loss import BMCLoss
 
 __all__ = ['MAF']
 
@@ -111,14 +110,29 @@ class MAF(nn.Module):
                                           hidden_size=hidden_size,
                                           output_size=1, drop_out=self.args.post_fusion_dropout )
 
-        self.mono_decoder = BaseClassifier(input_size=encoder_fea_dim,
+        self.t_mono_decoder = BaseClassifier(input_size=encoder_fea_dim,
+                                           hidden_size=hidden_size[2:],
+                                           output_size=1, drop_out=self.args.post_fusion_dropout )
+        self.v_mono_decoder = BaseClassifier(input_size=encoder_fea_dim,
+                                           hidden_size=hidden_size[2:],
+                                           output_size=1, drop_out=self.args.post_fusion_dropout )
+
+        self.a_mono_decoder = BaseClassifier(input_size=encoder_fea_dim,
                                            hidden_size=hidden_size[2:],
                                            output_size=1, drop_out=self.args.post_fusion_dropout )
 
 
-        self.l2norm = Normalize(2)
-        self.criterion = torch.nn.MSELoss(reduction='none')
 
+
+
+
+
+
+
+
+        self.l2norm = Normalize(2)
+        # self.criterion = BMCLoss(1.,self.args.device)
+        self.criterion = nn.MSELoss(reduce='none')
         # 特征融合
         if self.args.is_almt:
             self.h_hyper_layer = HhyperLearningEncoder(dim=args.post_fusion_dim, depth=args.AHL_depth, heads=8, dim_head=16, dropout = 0.)
@@ -187,38 +201,25 @@ class MAF(nn.Module):
             x_a_embed = F.dropout(x_t_embed, p=dropout_rate[2].item(), training=self.training)
 
 
-        pred_t = self.mono_decoder(x_t_embed).squeeze()
-        pred_a = self.mono_decoder(x_a_embed).squeeze()
-        pred_v = self.mono_decoder(x_v_embed).squeeze()
+        pred_t = self.t_mono_decoder(x_t_embed).squeeze(-1)
+        pred_a = self.a_mono_decoder(x_a_embed).squeeze(-1)
+        pred_v = self.v_mono_decoder(x_v_embed).squeeze(-1)
+     
+        pred_fusion = self.TVA_decoder(x_fusion_embed).squeeze(-1)
+
         
-
-        pred_fusion = self.TVA_decoder(x_fusion_embed).squeeze()
-
-    
-        pred_loss = self.criterion(pred_fusion, labels)
-
-       
-
-
-
-
-
-        loss_t = self.criterion(pred_t, labels)
-        loss_a = self.criterion(pred_a, labels)
-        loss_v = self.criterion(pred_v, labels)
-
+        
        
         
         # weighted_mono_loss = weighted[0].item()*loss_t + weighted[1].item()*loss_v + weighted[2].item()*loss_a
 
 
-        mono_loss = loss_t + loss_a + loss_v
-        loss = pred_loss + 0.1*mono_loss
-        # loss = pred_loss
+       
+       
 
 
 
-        return pred_fusion,pred_t,pred_a,pred_v,loss.mean()
+        return pred_fusion,pred_t,pred_a,pred_v
 
         # res = {
         #     'M': output_fusion, 

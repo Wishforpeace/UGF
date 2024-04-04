@@ -121,7 +121,8 @@ class ConfigPretrain():
                 'weight_decay':1e-3,
                 'lr_decay_step':10,
                 'lr_decay_ratio':0.1,
-                'ln_threshold':2e-2
+                'ln_threshold':2e-2,
+                'init_noise_sigma':1.0
             },
             # dataset
             'datasetParas':{
@@ -158,7 +159,7 @@ class ConfigPretrain():
                 },
                 'mosei':{
                     'batch_size': 32,
-                    'text_epochs':50,
+                    'text_epochs':100,
                     'vision_epochs':100,
                     'audio_epochs':100,
                     'fusion_epochs':10,
@@ -187,11 +188,11 @@ class ConfigPretrain():
                 },
                 'sims':{
                     'batch_size': 16,
-                    'text_epochs':50,
+                    'text_epochs':100,
                     'vision_epochs':100,
                     'audio_epochs':100,
                     'fusion_epochs':100,
-                    'finetune_epochs':50,
+                    'finetune_epochs':75,
                     'encoder_fea_dim':768,
                     'text_out': 768, 
                     'audio_out': 16,
@@ -202,6 +203,7 @@ class ConfigPretrain():
                     'audio_nhead':8,
                     'audio_tf_num_layers': 2,
                     'proj_fea_dim':768,
+                    'fusion_nhead':8,
                     # post feature
                     'post_fusion_dim': 128,
                     'post_text_dim':128,

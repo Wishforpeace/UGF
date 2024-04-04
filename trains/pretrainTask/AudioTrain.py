@@ -31,17 +31,18 @@ class Audio():
 
     def do_train(self,model,dataloader,check):
         
-        if self.args.parallel:
-            optimizer =  optim.Adam(model.module.Model.parameters(),lr=self.args.learning_rate,weight_decay=self.args.weight_decay)
-        else:
-            optimizer =  optim.Adam(model.Model.parameters(),lr=self.args.learning_rate)
-        # optimizer,scheduler = build_optimizer(args=self.args,optimizer_grouped_parameters=model.parameters(),epochs=self.epochs)
+        # if self.args.parallel:
+        #     optimizer =  optim.Adam(model.module.Model.parameters(),lr=self.args.learning_rate,weight_decay=self.args.weight_decay)
+        # else:
+        #     optimizer =  optim.Adam(model.Model.parameters(),lr=self.args.learning_rate)
+        optimizer,scheduler = build_optimizer(args=self.args,optimizer_grouped_parameters=model.parameters(),epochs=self.epochs)
 
         epoch, best_epoch = 0, 0
 
         train_all_epoch = int(self.epochs / 3)
         loss = 0.0
         train_loss = 0.0
+        criterion = nn.MSELoss(reduction='none')
         for epoch in range(1,self.epochs+1):
             model.train()
             if self.args.parallel:
@@ -70,13 +71,14 @@ class Audio():
                     else:
                         labels = batch_data['labels']['M'].clone().detach().to(self.args.device)
                     mask = batch_data['audio_padding_mask'].clone().detach().to(self.args.device)
-                    pred, fea, loss = model(audio=audio, audio_mask=mask,labels = labels.squeeze())
+                    pred, fea = model(audio=audio, audio_mask=mask,labels = labels.squeeze())
+                    loss = torch.mean(criterion(pred.squeeze(), labels.squeeze()))
                     y_true.append(labels)
                     y_pred.append(pred)
                     loss = loss.mean()
                     loss.backward()
                     optimizer.step()
-                    # scheduler.step()
+                    scheduler.step()
                 train_loss += loss.item()
 
             train_loss = train_loss / len(dataloader['train'])
@@ -89,9 +91,11 @@ class Audio():
 
             val_results = self.do_test(model, dataloader['valid'], mode="VAL")
 
-
+            test_results = self.do_test(model, dataloader['test'], mode="TEST")
             # if epoch > train_all_epoch:
-            check = check_and_save(model=model,result=val_results, check=check,parallel=self.args.parallel)
+            
+            check = check_and_save(model=model,result=test_results, check=check,parallel=self.args.parallel)
+
             torch.cuda.empty_cache()
         
             
@@ -104,7 +108,7 @@ class Audio():
                model.module.load_model(module='all')
             else:   
                 model.load_model(module='all')
-            
+        criterion = nn.MSELoss(reduction='none')
         with torch.no_grad():
             val_loss = 0.0
             y_pred =[]
@@ -117,10 +121,11 @@ class Audio():
                     else:
                         labels = batch_data['labels']['M'].clone().detach().to(self.args.device)
                     mask = batch_data['audio_padding_mask'].clone().detach().to(self.args.device)
-                    pred, fea, loss = model(audio=audio, audio_mask=mask, labels=labels.squeeze())
+                    pred, fea= model(audio=audio, audio_mask=mask, labels=labels.squeeze())
+                    loss = torch.mean(criterion(pred.squeeze(), labels.squeeze()))
                     val_loss += loss.mean().item()
-                y_pred.append(pred)
-                y_true.append(labels)
+                    y_pred.append(pred)
+                    y_true.append(labels)
         val_loss = val_loss / len(dataloader)
         logger.info(mode+"-(%s)" % self.args.modelName + " >> loss: %.4f " % val_loss)
         out_pred, true = torch.cat(y_pred), torch.cat(y_true)

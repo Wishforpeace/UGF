@@ -72,15 +72,13 @@ class AudioEncoderPretrain(nn.Module):
                                          output_size=1, drop_out=drop_out)
         self.multiheadPooling = MultiheadSelfAttentionWithPooling(embed_size=encoder_fea_dim,num_heads=self.args.audio_nhead)
         
-        self.criterion = torch.nn.MSELoss(reduction='none')
+       
 
     def forward(self, audio, label, key_padding_mask):
         x = self.encoder(audio, key_padding_mask)
         x = self.multiheadPooling(x)
-
         pred = self.classifier(x).squeeze()
-        loss = self.criterion(pred.squeeze(), label.squeeze())
-        return pred, x, loss
+        return pred, x
        
     def save_model(self):
         # save all modules
