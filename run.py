@@ -113,7 +113,9 @@ def run_finetune(args):
     seeds = args.seeds
     # run results
     for i, seed in enumerate(seeds):
-        check = {'Loss': 10000, 'MAE': 100}
+        # check = {'Loss': 10000, 'MAE': 100}
+        check = {'Mult_acc_7':0.0}
+        
         args = init_args
         # load config
         if args.train_mode == "finetune":
@@ -169,7 +171,8 @@ def run_pretrain(args):
     seeds = args.seeds
     # run results
     for i, seed in enumerate(seeds):
-        check = {'MAE': 100}
+        # check = {'MAE': 100}
+        check = {'Mult_acc_7':0.0}
         args = init_args
         # load config
         if args.train_mode == "pretrain":
@@ -305,16 +308,17 @@ if __name__ == '__main__':
     #         else:
     #             run_pretrain(args)
                 # run_mono_modal(args)
-    args.seeds = [1111, 1112,1113,1114,38,1024]
+    args.seeds = [1111,1112,1113, 1114]
     # args.seeds = [1234]
     
     
     
-    for i in ['audio']:
+    for i in ['audio','vision']:
     # for i in ['fusion']:
         args.modelName = i
+        args.w = 1
         if i == 'fusion':
-            for j in [True,False]:
+            for j in [True]:
                 args.is_agm = j 
                 args.train_mode='finetune'
                 run_finetune(args)

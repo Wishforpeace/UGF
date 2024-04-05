@@ -100,7 +100,7 @@ class TVA_Fusion():
                     loss_a = criterion(pred_a, labels)
                     loss_v = criterion(pred_v, labels)
                     mono_loss = loss_t + loss_a + loss_v
-                    loss = torch.mean(pred_loss +  mono_loss)
+                    loss = torch.mean(pred_loss +  self.args.w * mono_loss)
 
                     t_difference = torch.tanh(torch.abs(pred_t - labels))
                     t_score = torch.sum(1/(t_difference+self.epsilon))/pred_t.size(0)
@@ -188,8 +188,11 @@ class TVA_Fusion():
             logger.info('%s: >> ' %('fusion') + dict_to_str(train_results))
 
             val_results = self.do_test(model, dataloader['valid'], mode="VAL")
+            # _ = check_and_save(model=model,result=val_results, check=check,parallel=self.args.parallel)
+
+            test_results = self.do_test(model, dataloader['test'], mode="T")
             if epoch > save_start_epoch:
-                check = check_and_save(model=model,result=val_results, check=check,parallel=self.args.parallel)
+                check = check_and_save(model=model,result=test_results, check=check,parallel=self.args.parallel)
             
             torch.cuda.empty_cache()
                 
@@ -202,9 +205,9 @@ class TVA_Fusion():
             model.eval()
         else:
             if self.args.parallel:
-               model.module.load_model(module='all')
+               model.module.load_model(module=False)
             else:   
-                model.load_model(module='all')
+                model.load_model(module=False)
         # criterion = nn.MSELoss(reduction='none')
         criterion = BMCLoss(init_noise_sigma=self.args.init_noise_sigma,device=self.args.device)
         with torch.no_grad():

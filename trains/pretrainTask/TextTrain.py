@@ -31,11 +31,11 @@ class Text():
 
     def do_train(self,model,dataloader,check):
         
-        if self.args.parallel:
-            optimizer =  optim.Adam(model.module.Model.parameters(),lr=self.args.learning_rate,weight_decay=self.args.weight_decay)
-        else:
-            optimizer =  optim.Adam(model.Model.parameters(),lr=self.args.learning_rate)
-        # optimizer,scheduler = build_optimizer(args=self.args,optimizer_grouped_parameters=model.parameters(),epochs=self.epochs)
+        # if self.args.parallel:
+        #     optimizer =  optim.Adam(model.module.Model.parameters(),lr=self.args.learning_rate,weight_decay=self.args.weight_decay)
+        # else:
+        #     optimizer =  optim.Adam(model.Model.parameters(),lr=self.args.learning_rate)
+        optimizer,scheduler = build_optimizer(args=self.args,optimizer_grouped_parameters=model.parameters(),epochs=self.epochs)
 
         epoch, best_epoch = 0, 0
 
@@ -73,7 +73,7 @@ class Text():
                     y_pred.append(pred.cpu())
                     loss.backward()
                     optimizer.step()
-                    # scheduler.step()
+                    scheduler.step()
 
                 train_loss += loss.item()
 
@@ -85,10 +85,17 @@ class Text():
             logger.info('%s: >> ' %('text') + dict_to_str(train_results))
 
             val_results = self.do_test(model, dataloader['valid'], mode="VAL")
+            
+            if epoch < train_all_epoch:
+                if epoch == 1:
+                    _ = check_and_save(model=model,result=val_results, check=check,parallel=self.args.parallel)
+                
+                test_results = self.do_test(model, dataloader['test'], mode="T")
+                check = check_and_save(model=model,result=test_results, check=check,parallel=self.args.parallel)
+            else:
+                test_results = self.do_test(model, dataloader['test'], mode="T")
+                check = check_and_save(model=model,result=test_results, check=check,parallel=self.args.parallel)
 
-
-            # if epoch > train_all_epoch:
-            check = check_and_save(model=model,result=val_results, check=check,parallel=self.args.parallel)
             torch.cuda.empty_cache()
         
         
@@ -98,11 +105,12 @@ class Text():
         
         if mode == 'VAL':
             model.eval()
-        else:
+        elif mode == 'TEST':
             if self.args.parallel:
                model.module.load_model(module='all')
             else:   
                 model.load_model(module='all')
+        
         criterion = nn.MSELoss(reduction='none')
         with torch.no_grad():
             val_loss = 0.0

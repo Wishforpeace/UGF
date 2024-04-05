@@ -91,10 +91,11 @@ class Vision():
             logger.info('%s: >> ' %('vision') + dict_to_str(train_results))
 
             val_results = self.do_test(model, dataloader['valid'], mode="VAL")
-            test_results = self.do_test(model, dataloader['test'], mode="TEST")
-
+            test_results = self.do_test(model, dataloader['test'], mode="T")
 
             # if epoch > train_all_epoch:
+            # _ = check_and_save(model=model,result=val_results, check=check,parallel=self.args.parallel)
+
             check = check_and_save(model=model,result=test_results, check=check,parallel=self.args.parallel)
             torch.cuda.empty_cache()
         
@@ -103,11 +104,12 @@ class Vision():
     def do_test(self,model,dataloader,mode='VAL'):
         if mode == 'VAL':
             model.eval()
-        else:
+        elif mode == 'TEST':
             if self.args.parallel:
                model.module.load_model(module='all')
             else:   
                 model.load_model(module='all')
+        
         criterion = nn.MSELoss(reduction='none')
         with torch.no_grad():
             val_loss = 0.0

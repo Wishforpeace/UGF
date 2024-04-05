@@ -90,10 +90,11 @@ class Audio():
             logger.info('%s: >> ' %('audio') + dict_to_str(train_results))
 
             val_results = self.do_test(model, dataloader['valid'], mode="VAL")
+            # _ = check_and_save(model=model,result=val_results, check=check,parallel=self.args.parallel)
 
-            test_results = self.do_test(model, dataloader['test'], mode="TEST")
-            # if epoch > train_all_epoch:
             
+            # if epoch > train_all_epoch:
+            test_results = self.do_test(model, dataloader['test'], mode="T")
             check = check_and_save(model=model,result=test_results, check=check,parallel=self.args.parallel)
 
             torch.cuda.empty_cache()
@@ -103,7 +104,7 @@ class Audio():
     def do_test(self,model,dataloader,mode='VAL'):
         if mode == 'VAL':
             model.eval()
-        else:
+        elif mode == 'TEST':
             if self.args.parallel:
                model.module.load_model(module='all')
             else:   
